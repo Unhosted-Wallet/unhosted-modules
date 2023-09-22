@@ -14,12 +14,8 @@ import { MAX_UINT256 } from "./utils/constants";
 
 import {
   getEntryPoint,
-  getSmartAccountImplementation,
-  getSmartAccountFactory,
-  getMockToken,
   getEcdsaOwnershipRegistryModule,
   getSmartAccountWithModule,
-  getVerifyingPaymaster,
 } from "./utils/setupHelper";
 import { getTokenProvider } from "./utils/providers";
 
@@ -78,7 +74,6 @@ describe("Strategy Module", async () => {
     wethProviderAddress = await ethers.getSigner(wethProviderAddress);
 
     const entryPoint = await getEntryPoint();
-    const mockToken = await getMockToken();
     const ecdsaModule = await getEcdsaOwnershipRegistryModule();
     const EcdsaOwnershipRegistryModule = await ethers.getContractFactory(
       "EcdsaOwnershipRegistryModule"
@@ -101,7 +96,6 @@ describe("Strategy Module", async () => {
       to: userSA.address,
       value: ethers.utils.parseEther("10"),
     });
-    await mockToken.mint(userSA.address, ethers.utils.parseEther("1000000"));
 
     aaveV2handler = await (
       await ethers.getContractFactory("AaveV2Handler")
@@ -124,13 +118,8 @@ describe("Strategy Module", async () => {
     await entryPoint.handleOps([userOp], alice.address);
 
     return {
-      entryPoint: entryPoint,
-      smartAccountImplementation: await getSmartAccountImplementation(),
-      smartAccountFactory: await getSmartAccountFactory(),
-      mockToken: mockToken,
       ecdsaModule: ecdsaModule,
       userSA: userSA,
-      verifyingPaymaster: await getVerifyingPaymaster(deployer, verifiedSigner),
     };
   });
 

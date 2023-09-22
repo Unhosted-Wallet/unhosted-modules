@@ -1,30 +1,15 @@
 import {
   arrayify,
   defaultAbiCoder,
-  hexConcat,
   hexDataSlice,
-  hexValue,
   keccak256,
-  hexZeroPad,
 } from "ethers/lib/utils";
 import { BigNumber, Contract, Signer, Wallet } from "ethers";
 import { ethers } from "hardhat";
-import {
-  AddressZero,
-  callDataCost,
-  HashZero,
-  rethrow,
-} from "../utils/testUtils";
-import {
-  ecsign,
-  toRpcSig,
-  keccak256 as keccak256Buffer,
-} from "ethereumjs-util";
+import { AddressZero, callDataCost, rethrow } from "./testUtils";
 import { EntryPoint } from "../../typechain";
 import { UserOperation } from "./userOperation";
 import { Create2Factory } from "../../src/Create2Factory";
-import { MerkleTree } from "merkletreejs";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 export function packUserOp(op: UserOperation, forSignature = true): string {
   if (forSignature) {
@@ -87,35 +72,6 @@ export function packUserOp(op: UserOperation, forSignature = true): string {
   }
 }
 
-export function packUserOp1(op: UserOperation): string {
-  return defaultAbiCoder.encode(
-    [
-      "address", // sender
-      "uint256", // nonce
-      "bytes32", // initCode
-      "bytes32", // callData
-      "uint256", // callGasLimit
-      "uint256", // verificationGasLimit
-      "uint256", // preVerificationGas
-      "uint256", // maxFeePerGas
-      "uint256", // maxPriorityFeePerGas
-      "bytes32", // paymasterAndData
-    ],
-    [
-      op.sender,
-      op.nonce,
-      keccak256(op.initCode),
-      keccak256(op.callData),
-      op.callGasLimit,
-      op.verificationGasLimit,
-      op.preVerificationGas,
-      op.maxFeePerGas,
-      op.maxPriorityFeePerGas,
-      keccak256(op.paymasterAndData),
-    ]
-  );
-}
-
 export function getUserOpHash(
   op: UserOperation,
   entryPoint: string,
@@ -142,31 +98,6 @@ export const DefaultsForUserOp: UserOperation = {
   paymasterAndData: "0x",
   signature: "0x",
 };
-
-export function signUserOp(
-  op: UserOperation,
-  signer: Wallet,
-  entryPoint: string,
-  chainId: number
-): UserOperation {
-  const message = getUserOpHash(op, entryPoint, chainId);
-  const msg1 = Buffer.concat([
-    Buffer.from("\x19Ethereum Signed Message:\n32", "ascii"),
-    Buffer.from(arrayify(message)),
-  ]);
-
-  const sig = ecsign(
-    keccak256Buffer(msg1),
-    Buffer.from(arrayify(signer.privateKey))
-  );
-  // that's equivalent of:  await signer.signMessage(message);
-  // (but without "async"
-  const signedMessage1 = toRpcSig(sig.v, sig.r, sig.s);
-  return {
-    ...op,
-    signature: signedMessage1,
-  };
-}
 
 export function fillUserOpDefaults(
   op: Partial<UserOperation>,
@@ -376,224 +307,4 @@ export async function makeEcdsaModuleUserOp(
 
   userOp.signature = signatureWithModuleAddress;
   return userOp;
-}
-
-export async function makeEcdsaModuleUserOpWithPaymaster(
-  functionName: string,
-  functionParams: any,
-  userOpSender: string,
-  userOpSigner: Signer,
-  entryPoint: EntryPoint,
-  moduleAddress: string,
-  paymaster: Contract,
-  verifiedSigner: Wallet | SignerWithAddress,
-  validUntil: number,
-  validAfter: number,
-  options?: {
-    preVerificationGas?: number;
-  },
-  nonceKey = 0
-): Promise<UserOperation> {
-  const SmartAccount = await ethers.getContractFactory("SmartAccount");
-
-  const txnDataAA1 = SmartAccount.interface.encodeFunctionData(
-    functionName,
-    functionParams
-  );
-
-  const userOp = await fillAndSign(
-    {
-      sender: userOpSender,
-      callData: txnDataAA1,
-      ...options,
-    },
-    userOpSigner,
-    entryPoint,
-    "nonce",
-    true,
-    nonceKey,
-    0
-  );
-
-  const hash = await paymaster.getHash(
-    userOp,
-    verifiedSigner.address,
-    validUntil,
-    validAfter
-  );
-  const paymasterSig = await verifiedSigner.signMessage(arrayify(hash));
-  const userOpWithPaymasterData = await fillAndSign(
-    {
-      // eslint-disable-next-line node/no-unsupported-features/es-syntax
-      ...userOp,
-      paymasterAndData: hexConcat([
-        paymaster.address,
-        ethers.utils.defaultAbiCoder.encode(
-          ["address", "uint48", "uint48", "bytes"],
-          [verifiedSigner.address, validUntil, validAfter, paymasterSig]
-        ),
-      ]),
-    },
-    userOpSigner,
-    entryPoint,
-    "nonce",
-    true,
-    nonceKey,
-    0
-  );
-
-  // add validator module address to the signature
-  const signatureWithModuleAddress = ethers.utils.defaultAbiCoder.encode(
-    ["bytes", "address"],
-    [userOpWithPaymasterData.signature, moduleAddress]
-  );
-
-  userOpWithPaymasterData.signature = signatureWithModuleAddress;
-
-  return userOpWithPaymasterData;
-}
-
-export async function makeSARegistryModuleUserOp(
-  functionName: string,
-  functionParams: any,
-  userOpSender: string,
-  userOpSigner: Signer,
-  entryPoint: EntryPoint,
-  saRegistryModuleAddress: string,
-  ecdsaModuleAddress: string,
-  options?: {
-    preVerificationGas?: number;
-  },
-  nonceKey = 0
-): Promise<UserOperation> {
-  const SmartAccount = await ethers.getContractFactory("SmartAccount");
-
-  const txnDataAA1 = SmartAccount.interface.encodeFunctionData(
-    functionName,
-    functionParams
-  );
-
-  const userOp = await fillAndSign(
-    {
-      sender: userOpSender,
-      callData: txnDataAA1,
-      ...options,
-    },
-    userOpSigner,
-    entryPoint,
-    "nonce",
-    true,
-    nonceKey,
-    0
-  );
-
-  const signatureForSAOwnershipRegistry = ethers.utils.defaultAbiCoder.encode(
-    ["bytes", "address"],
-    [userOp.signature, ecdsaModuleAddress]
-  );
-
-  const signatureForECDSAOwnershipRegistry =
-    ethers.utils.defaultAbiCoder.encode(
-      ["bytes", "address"],
-      [signatureForSAOwnershipRegistry, saRegistryModuleAddress]
-    );
-
-  userOp.signature = signatureForECDSAOwnershipRegistry;
-  return userOp;
-}
-
-export async function makeMultichainEcdsaModuleUserOp(
-  functionName: string,
-  functionParams: any,
-  userOpSender: string,
-  userOpSigner: Signer,
-  entryPoint: EntryPoint,
-  moduleAddress: string,
-  leaves: string[],
-  options?: {
-    preVerificationGas?: number;
-  },
-  validUntil = 0,
-  validAfter = 0,
-  nonceKey = 0
-): Promise<UserOperation> {
-  const SmartAccount = await ethers.getContractFactory("SmartAccount");
-
-  const txnDataAA1 = SmartAccount.interface.encodeFunctionData(
-    functionName,
-    functionParams
-  );
-
-  const userOp = await fillAndSign(
-    {
-      sender: userOpSender,
-      callData: txnDataAA1,
-      ...options,
-    },
-    userOpSigner,
-    entryPoint,
-    "nonce",
-    true,
-    nonceKey,
-    0
-  );
-
-  const leafOfThisUserOp = hexConcat([
-    hexZeroPad(ethers.utils.hexlify(validUntil), 6),
-    hexZeroPad(ethers.utils.hexlify(validAfter), 6),
-    hexZeroPad(await entryPoint.getUserOpHash(userOp), 32),
-  ]);
-
-  leaves.push(leafOfThisUserOp);
-  leaves = leaves.map((x) => ethers.utils.keccak256(x));
-
-  const chainMerkleTree = new MerkleTree(leaves, keccak256, {
-    sortPairs: true,
-  });
-
-  // user only signs once
-  const multichainSignature = await userOpSigner.signMessage(
-    ethers.utils.arrayify(chainMerkleTree.getHexRoot())
-  );
-
-  // but still required to pad the signature with the required data (unsigned) for every chain
-  // this is done by dapp automatically
-  const merkleProof = chainMerkleTree.getHexProof(leaves[leaves.length - 1]);
-  const moduleSignature = defaultAbiCoder.encode(
-    ["uint48", "uint48", "bytes32", "bytes32[]", "bytes"],
-    [
-      validUntil,
-      validAfter,
-      chainMerkleTree.getHexRoot(),
-      merkleProof,
-      multichainSignature,
-    ]
-  );
-
-  // add validator module address to the signature
-  const signatureWithModuleAddress = defaultAbiCoder.encode(
-    ["bytes", "address"],
-    [moduleSignature, moduleAddress]
-  );
-
-  // =================== put signature into userOp and execute ===================
-  userOp.signature = signatureWithModuleAddress;
-
-  return userOp;
-}
-
-export function serializeUserOp(op: UserOperation) {
-  return {
-    sender: op.sender,
-    nonce: hexValue(op.nonce),
-    initCode: op.initCode,
-    callData: op.callData,
-    callGasLimit: hexValue(op.callGasLimit),
-    verificationGasLimit: hexValue(op.verificationGasLimit),
-    preVerificationGas: hexValue(op.preVerificationGas),
-    maxFeePerGas: hexValue(op.maxFeePerGas),
-    maxPriorityFeePerGas: hexValue(op.maxPriorityFeePerGas),
-    paymasterAndData: op.paymasterAndData,
-    signature: op.signature,
-  };
 }
