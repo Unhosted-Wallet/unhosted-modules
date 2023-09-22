@@ -16,11 +16,9 @@
     "lint:sol-fix": "npx prettier 'contracts/**/*.sol' --write && npx solhint 'contracts/**/*.sol' --fix",
     "lint": "npm run lint:ts && npm run lint:sol",
     "lint:fix": "npm run lint:ts-fix && npm run lint:sol-fix",
-    "postinstall": "husky install",
     "prepack": "pinst --disable",
     "postpack": "pinst --enable",
-    "coverage": "COVERAGE=1 DISABLE_VIA_IR=true hardhat coverage",
-    "prepare": "husky install"
+    "coverage": "COVERAGE=1 DISABLE_VIA_IR=true hardhat coverage"
   },
   "keywords": [
     "Account Abstraction",
