@@ -61,3 +61,37 @@ export const getSmartAccountWithModule = async (
     expectedSmartAccountAddress
   );
 };
+
+export const getStrategyModuleImplementation = async () => {
+  const StrategyModuleImplDeployment = await deployments.get("StrategyModule");
+  const StrategyModuleImpl = await hre.ethers.getContractFactory(
+    "StrategyModule"
+  );
+  return StrategyModuleImpl.attach(StrategyModuleImplDeployment.address);
+};
+
+export const getStrategyModuleFactory = async () => {
+  const SMFactoryDeployment = await deployments.get("StrategyModuleFactory");
+  const StrategyModuleFactory = await hre.ethers.getContractFactory(
+    "StrategyModuleFactory"
+  );
+  const strategyModuleFactory = StrategyModuleFactory.attach(
+    SMFactoryDeployment.address
+  );
+  return strategyModuleFactory;
+};
+
+export const getStrategyModule = async (
+  beneficiary: string,
+  handler: BytesLike,
+  index: number
+) => {
+  const factory = await getStrategyModuleFactory();
+  const expectedStrategyModuleAddress =
+    await factory.getAddressForStrategyModule(beneficiary, handler, index);
+  await factory.deployStrategyModule(beneficiary, handler, index);
+  return await hre.ethers.getContractAt(
+    "StrategyModule",
+    expectedStrategyModuleAddress
+  );
+};

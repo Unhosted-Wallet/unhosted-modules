@@ -41,8 +41,8 @@ export const EIP712_ACCOUNT_TX_TYPE = {
 };
 
 export const EIP712_EXECUTE_STRATEGY_TYPE = {
-  // "EXECUTE_STRATEGY(uint256 value,bytes data,uint256 nonce)"
-  EXECUTE_STRATEGY: [
+  // "ExecuteStrategy(uint256 value,bytes data,uint256 nonce)"
+  ExecuteStrategy: [
     { type: "address", name: "handler" },
     { type: "uint256", name: "value" },
     { type: "bytes", name: "data" },
