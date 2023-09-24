@@ -16,6 +16,7 @@ import {
   getEntryPoint,
   getEcdsaOwnershipRegistryModule,
   getSmartAccountWithModule,
+  getStrategyModule,
 } from "./utils/setupHelper";
 import { getTokenProvider } from "./utils/providers";
 
@@ -26,8 +27,7 @@ describe("Strategy Module", async () => {
   } else {
     return;
   }
-  const [deployer, smartAccountOwner, alice, verifiedSigner] =
-    waffle.provider.getWallets();
+  const [deployer, smartAccountOwner, alice] = waffle.provider.getWallets();
   let strategyModule: Contract;
   let aaveV2handler: Contract;
   let WrappedETH: Contract;
@@ -101,10 +101,11 @@ describe("Strategy Module", async () => {
       await ethers.getContractFactory("AaveV2Handler")
     ).deploy(WRAPPED_NATIVE_TOKEN, AAVEPROTOCOL_V2_PROVIDER);
 
-    // deploy strategy module and enable it in the smart account
-    strategyModule = await (
-      await ethers.getContractFactory("StrategyModule")
-    ).deploy(aaveV2handler.address);
+    strategyModule = await getStrategyModule(
+      alice.address,
+      aaveV2handler.address,
+      smartAccountDeploymentIndex
+    );
 
     const userOp = await makeEcdsaModuleUserOp(
       "enableModule",
