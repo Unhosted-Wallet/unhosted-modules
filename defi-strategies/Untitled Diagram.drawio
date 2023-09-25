@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-09-25T10:18:08.329Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/117.0" etag="OS_gH13CmJcmNAIMJBb5" version="21.8.1" type="github">
+<mxfile host="app.diagrams.net" modified="2023-09-25T10:21:42.286Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/117.0" etag="0Tp_5vm9OInna2wt6-5V" version="21.8.1" type="github">
   <diagram name="Page-1" id="TvMvOZ9mV_910rXKRIYk">
     <mxGraphModel dx="1804" dy="536" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -33,9 +33,17 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="MDHbiPIN4DShXxyYwHcX-33" value="5d. transfer fee" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="MDHbiPIN4DShXxyYwHcX-32">
+        <mxCell id="MDHbiPIN4DShXxyYwHcX-33" value="5e. transfer fee" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="MDHbiPIN4DShXxyYwHcX-32">
           <mxGeometry x="0.0561" y="3" relative="1" as="geometry">
             <mxPoint x="1" y="-11" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="MDHbiPIN4DShXxyYwHcX-34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.695;entryY=-0.033;entryDx=0;entryDy=0;exitX=0.833;exitY=0.989;exitDx=0;exitDy=0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="MDHbiPIN4DShXxyYwHcX-4" target="MDHbiPIN4DShXxyYwHcX-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MDHbiPIN4DShXxyYwHcX-35" value="5d. isApproved" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="MDHbiPIN4DShXxyYwHcX-34">
+          <mxGeometry x="-0.2688" relative="1" as="geometry">
+            <mxPoint x="9" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="MDHbiPIN4DShXxyYwHcX-4" value="Custom Strategy" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
