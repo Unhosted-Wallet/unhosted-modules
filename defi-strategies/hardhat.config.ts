@@ -58,7 +58,7 @@ const config: HardhatUserConfig = {
             chainId: 1,
             forking: {
               url: process.env.MANTLE_MAINNET_URL || "https://rpc.ankr.com/eth",
-              blockNumber: 18181577,
+              blockNumber: 18228258,
             },
             accounts: {
               mnemonic:
