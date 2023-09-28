@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { Contract } from "ethers";
+import { decodeError } from "ethers-decode-error";
 import hardhat, { ethers, deployments, waffle } from "hardhat";
 import { buildEcdsaModuleAuthorizedStrategyTx } from "./utils/execution";
 import { makeEcdsaModuleUserOp } from "./utils/userOp";
@@ -38,9 +39,24 @@ describe("Strategy Module", async () => {
   let lendingPool: Contract;
   let providerAddress: any;
   let wethProviderAddress: any;
+  let fee: any;
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
+
+    const errAbi = [
+      {
+        inputs: [
+          {
+            internalType: "uint256",
+            name: "",
+            type: "uint256",
+          },
+        ],
+        name: "RevertEstimation",
+        type: "error",
+      },
+    ];
 
     provider = await ethers.getContractAt(
       "ILendingPoolAddressesProviderV2",
@@ -121,6 +137,7 @@ describe("Strategy Module", async () => {
     return {
       ecdsaModule: ecdsaModule,
       userSA: userSA,
+      errAbi: errAbi,
     };
   });
 
@@ -131,7 +148,7 @@ describe("Strategy Module", async () => {
 
   describe("Deposit", function () {
     it("deposit ETH normal", async function () {
-      const { userSA, ecdsaModule } = await setupTests();
+      const { userSA, ecdsaModule, errAbi } = await setupTests();
       const value = ethers.utils.parseEther("1");
       const handler = aaveV2handler.address;
       const data = (
@@ -153,7 +170,19 @@ describe("Strategy Module", async () => {
         userSA.address
       );
 
-      await strategyModule.execStrategy(userSA.address, transaction, signature);
+      try {
+        await strategyModule.requiredTxFee(userSA.address, transaction);
+      } catch (error) {
+        fee = decodeError(error, errAbi).args;
+        fee = fee[0];
+      }
+
+      await strategyModule.execStrategy(
+        userSA.address,
+        transaction,
+        signature,
+        { value: fee }
+      );
 
       const afterExecBalance = await waffle.provider.getBalance(userSA.address);
 
@@ -169,7 +198,7 @@ describe("Strategy Module", async () => {
     });
 
     it("deposit ETH max amount", async function () {
-      const { userSA, ecdsaModule } = await setupTests();
+      const { userSA, ecdsaModule, errAbi } = await setupTests();
       const value = ethers.utils.parseEther("1");
       const handler = aaveV2handler.address;
       const data = (
@@ -187,10 +216,22 @@ describe("Strategy Module", async () => {
           value.toString()
         );
 
+      try {
+        await strategyModule.requiredTxFee(userSA.address, transaction);
+      } catch (error) {
+        fee = decodeError(error, errAbi).args;
+        fee = fee[0];
+      }
+
       const beforeExecBalance = await waffle.provider.getBalance(
         userSA.address
       );
-      await strategyModule.execStrategy(userSA.address, transaction, signature);
+      await strategyModule.execStrategy(
+        userSA.address,
+        transaction,
+        signature,
+        { value: fee }
+      );
 
       const afterExecBalance = await waffle.provider.getBalance(userSA.address);
 
@@ -210,7 +251,7 @@ describe("Strategy Module", async () => {
     });
 
     it("deposit token normal", async function () {
-      const { userSA, ecdsaModule } = await setupTests();
+      const { userSA, ecdsaModule, errAbi } = await setupTests();
       const value = ethers.utils.parseEther("1");
       const handler = aaveV2handler.address;
 
@@ -234,9 +275,21 @@ describe("Strategy Module", async () => {
           0
         );
 
+      try {
+        await strategyModule.requiredTxFee(userSA.address, transaction);
+      } catch (error) {
+        fee = decodeError(error, errAbi).args;
+        fee = fee[0];
+      }
+
       const beforeExecBalance = await token.balanceOf(userSA.address);
 
-      await strategyModule.execStrategy(userSA.address, transaction, signature);
+      await strategyModule.execStrategy(
+        userSA.address,
+        transaction,
+        signature,
+        { value: fee }
+      );
 
       const afterExecBalance = await token.balanceOf(userSA.address);
 
@@ -250,7 +303,7 @@ describe("Strategy Module", async () => {
     });
 
     it("deposit token max amount", async function () {
-      const { userSA, ecdsaModule } = await setupTests();
+      const { userSA, ecdsaModule, errAbi } = await setupTests();
       const value = ethers.utils.parseEther("10");
       const handler = aaveV2handler.address;
 
@@ -274,9 +327,21 @@ describe("Strategy Module", async () => {
           0
         );
 
+      try {
+        await strategyModule.requiredTxFee(userSA.address, transaction);
+      } catch (error) {
+        fee = decodeError(error, errAbi).args;
+        fee = fee[0];
+      }
+
       const beforeExecBalance = await token.balanceOf(userSA.address);
 
-      await strategyModule.execStrategy(userSA.address, transaction, signature);
+      await strategyModule.execStrategy(
+        userSA.address,
+        transaction,
+        signature,
+        { value: fee }
+      );
 
       const afterExecBalance = await token.balanceOf(userSA.address);
 
@@ -294,7 +359,7 @@ describe("Strategy Module", async () => {
     let depositAmount = ethers.utils.parseEther("5");
 
     it("withdraw ETH partial", async function () {
-      const { userSA, ecdsaModule } = await setupTests();
+      const { userSA, ecdsaModule, errAbi } = await setupTests();
       await WrappedETH.connect(wethProviderAddress).approve(
         lendingPool.address,
         depositAmount
@@ -323,11 +388,23 @@ describe("Strategy Module", async () => {
           0
         );
 
+      try {
+        await strategyModule.requiredTxFee(userSA.address, transaction);
+      } catch (error) {
+        fee = decodeError(error, errAbi).args;
+        fee = fee[0];
+      }
+
       const beforeExecBalance = await AWrappedETH.balanceOf(userSA.address);
 
       const beforeExecETH = await waffle.provider.getBalance(userSA.address);
 
-      await strategyModule.execStrategy(userSA.address, transaction, signature);
+      await strategyModule.execStrategy(
+        userSA.address,
+        transaction,
+        signature,
+        { value: fee }
+      );
 
       const afterExecBalance = await AWrappedETH.balanceOf(userSA.address);
 
@@ -347,7 +424,7 @@ describe("Strategy Module", async () => {
     });
 
     it("withdraw ETH max amount", async function () {
-      const { userSA, ecdsaModule } = await setupTests();
+      const { userSA, ecdsaModule, errAbi } = await setupTests();
       await WrappedETH.connect(wethProviderAddress).approve(
         lendingPool.address,
         depositAmount
@@ -379,7 +456,19 @@ describe("Strategy Module", async () => {
 
       const beforeExecETH = await waffle.provider.getBalance(userSA.address);
 
-      await strategyModule.execStrategy(userSA.address, transaction, signature);
+      try {
+        await strategyModule.requiredTxFee(userSA.address, transaction);
+      } catch (error) {
+        fee = decodeError(error, errAbi).args;
+        fee = fee[0];
+      }
+
+      await strategyModule.execStrategy(
+        userSA.address,
+        transaction,
+        signature,
+        { value: fee }
+      );
 
       const afterExecBalance = await AWrappedETH.balanceOf(userSA.address);
 
@@ -399,7 +488,7 @@ describe("Strategy Module", async () => {
     });
 
     it("withdraw token partial", async function () {
-      const { userSA, ecdsaModule } = await setupTests();
+      const { userSA, ecdsaModule, errAbi } = await setupTests();
       await token
         .connect(providerAddress)
         .approve(lendingPool.address, depositAmount);
@@ -430,10 +519,22 @@ describe("Strategy Module", async () => {
           0
         );
 
+      try {
+        await strategyModule.requiredTxFee(userSA.address, transaction);
+      } catch (error) {
+        fee = decodeError(error, errAbi).args;
+        fee = fee[0];
+      }
+
       const beforeExecBalance = await aToken.balanceOf(userSA.address);
       const beforeExecToken = await token.balanceOf(userSA.address);
 
-      await strategyModule.execStrategy(userSA.address, transaction, signature);
+      await strategyModule.execStrategy(
+        userSA.address,
+        transaction,
+        signature,
+        { value: fee }
+      );
 
       const afterExecBalance = await aToken.balanceOf(userSA.address);
 
@@ -451,10 +552,11 @@ describe("Strategy Module", async () => {
     });
 
     it("withdraw token max amount", async function () {
-      const { userSA, ecdsaModule } = await setupTests();
+      const { userSA, ecdsaModule, errAbi } = await setupTests();
       await token
         .connect(providerAddress)
         .approve(lendingPool.address, depositAmount);
+
       await lendingPool
         .connect(providerAddress)
         .deposit(token.address, depositAmount, userSA.address, 0);
@@ -485,7 +587,19 @@ describe("Strategy Module", async () => {
 
       const beforeExecToken = await token.balanceOf(userSA.address);
 
-      await strategyModule.execStrategy(userSA.address, transaction, signature);
+      try {
+        await strategyModule.requiredTxFee(userSA.address, transaction);
+      } catch (error) {
+        fee = decodeError(error, errAbi).args;
+        fee = fee[0];
+      }
+
+      await strategyModule.execStrategy(
+        userSA.address,
+        transaction,
+        signature,
+        { value: fee }
+      );
 
       const afterExecBalance = await aToken.balanceOf(userSA.address);
 
