@@ -6,6 +6,7 @@ import {Enum} from "./Enum.sol";
 import {ReentrancyGuard} from "./ReentrancyGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IExecFromModule, IStrategyModule} from "./interfaces/IStrategyModule.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 /**
  * @title Defi Base Strategy module for Biconomy Smart Accounts.
@@ -30,8 +31,14 @@ contract StrategyModule is
     bytes32 internal constant EXECUTE_STRATEGY_TYPEHASH =
         0x06d4deb91a5dc73a3ea344ed05631460315e2109778b250fdd941893ee92bec8;
 
-    /* solhint-disable var-name-mixedcase */
-    uint256 private CHAIN_ID;
+    // solhint-disable-next-line
+    address internal constant _gasFeed =
+        0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C;
+
+    // solhint-disable-next-line
+    uint8 internal constant _feeFactor = 10; //0.1 %
+
+    uint256 private immutable CHAIN_ID;
 
     mapping(address => uint256) public nonces;
 
@@ -43,6 +50,11 @@ contract StrategyModule is
 
     error AlreadyInitialized();
     error AddressCanNotBeZero();
+    error RevertEstimation(uint256);
+
+    constructor() {
+        CHAIN_ID = block.chainid;
+    }
 
     function init(
         address beneficiary_,
@@ -54,7 +66,6 @@ contract StrategyModule is
         }
         handler = handler_;
         beneficiary = beneficiary_;
-        CHAIN_ID = block.chainid;
         return true;
     }
 
@@ -88,6 +99,7 @@ contract StrategyModule is
         }
 
         {
+            uint256 startGas = gasleft();
             success = IExecFromModule(strategyModule).execTransactionFromModule(
                 handler,
                 _tx.value,
@@ -104,6 +116,33 @@ contract StrategyModule is
             payable(beneficiary).transfer(used);
             payable(msg.sender).transfer(msg.value - used);
         }
+    }
+
+    /**
+     * @dev Allows to estimate a transaction.
+     * This method is for estimation only, it will always revert and encode the result in the revert data.
+     * Call this method to get an estimate of the execTransactionFromModule costs that are deducted with `execStrategy`
+     */
+    function requiredTxFee(
+        address strategyModule,
+        StrategyTransaction memory _tx
+    ) public {
+        uint256 startGas = gasleft();
+
+        IExecFromModule(strategyModule).execTransactionFromModule(
+            handler,
+            _tx.value,
+            _tx.data,
+            Enum.Operation.DelegateCall,
+            _tx.gas
+        );
+        uint256 used = (startGas - gasleft());
+
+        (, int256 answer, , , ) = AggregatorV3Interface(_gasFeed)
+            .latestRoundData();
+
+        used = (used * uint256(answer) * _feeFactor) / 1e4;
+        revert RevertEstimation(used);
     }
 
     /**
