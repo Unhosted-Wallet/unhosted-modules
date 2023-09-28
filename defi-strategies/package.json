@@ -83,9 +83,12 @@
   },
   "dependencies": {
     "@account-abstraction/contracts": "^0.6.0",
+    "@chainlink/contracts": "^0.7.1",
     "@ethersproject/abstract-signer": "^5.6.2",
     "@ethersproject/constants": "^5.6.1",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.9",
     "axios": "^1.4.0",
-    "ethereumjs-util": "^7.1.0"
+    "ethereumjs-util": "^7.1.0",
+    "ethers-decode-error": "^1.0.0"
   }
 }

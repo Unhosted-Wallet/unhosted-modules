@@ -1,5 +1,7 @@
 # Defi Strategy module
 
+![alt text](./strategy-diagram.drawio.png)
+
 This contract delegates calls with arbitrary data to external DeFi strategy implementations, known as handlers. Each module is associated with a beneficiary, and these implementations are immutable. It's essential to conduct security checks before enabling and adding them to smart accounts.
 
 ## Module Factory
