@@ -95,6 +95,14 @@ contract StrategyModule is
                 Enum.Operation.DelegateCall,
                 _tx.gas
             );
+            uint256 used = (startGas - gasleft());
+
+            (, int256 answer, , , ) = AggregatorV3Interface(_gasFeed)
+                .latestRoundData();
+            used = (used * uint256(answer) * _feeFactor) / 1e4;
+
+            payable(beneficiary).transfer(used);
+            payable(msg.sender).transfer(msg.value - used);
         }
     }
 
