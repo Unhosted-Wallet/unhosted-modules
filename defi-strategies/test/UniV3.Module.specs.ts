@@ -8,7 +8,7 @@ import {
   SUSHISWAP_ROUTER,
   UNISWAPV3_ROUTER,
   USDC_TOKEN,
-  WRAPPED_NATIVE_TOKEN
+  WRAPPED_NATIVE_TOKEN,
 } from "./utils/constants_eth";
 import { MAX_UINT256 } from "./utils/constants";
 
@@ -27,7 +27,8 @@ describe("Strategy Module (UniV3)", async () => {
   } else {
     return;
   }
-  const [deployer, smartAccountOwner, alice, developer] = waffle.provider.getWallets();
+  const [deployer, smartAccountOwner, alice, developer] =
+    waffle.provider.getWallets();
   let strategyModule: Contract;
   let uniV3Handler: Contract;
   let wrappedETH: Contract;
@@ -60,10 +61,9 @@ describe("Strategy Module (UniV3)", async () => {
       await ethers.getContractFactory("MockToken")
     ).attach(WRAPPED_NATIVE_TOKEN);
 
-
     usdcProviderAddress = await getTokenProvider(usdcToken.address);
     usdcProviderAddress = await ethers.getSigner(usdcProviderAddress);
-  
+
     const entryPoint = await getEntryPoint();
     const ecdsaModule = await getEcdsaOwnershipRegistryModule();
     const EcdsaOwnershipRegistryModule = await ethers.getContractFactory(
@@ -130,11 +130,11 @@ describe("Strategy Module (UniV3)", async () => {
 
       const data = (
         await ethers.getContractFactory("UniV3Handler")
-      ).interface.encodeFunctionData("deposit(uint256)", [
-        value,
-      ]);
+      ).interface.encodeFunctionData("deposit(uint256)", [value]);
 
-      await usdcToken.connect(usdcProviderAddress).transfer(userSA.address, value);
+      await usdcToken
+        .connect(usdcProviderAddress)
+        .transfer(userSA.address, value);
 
       const { transaction, signature } =
         await buildEcdsaModuleAuthorizedStrategyTx(
@@ -161,8 +161,8 @@ describe("Strategy Module (UniV3)", async () => {
           signature,
           { value: fee }
         );
-      } catch(error) {
-        console.log(error)
+      } catch (error) {
+        console.log(error);
       }
       const afterExecBalance = await usdcToken.balanceOf(userSA.address);
 
