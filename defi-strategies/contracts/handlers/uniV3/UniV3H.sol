@@ -44,32 +44,7 @@ contract UniV3Handler is BaseHandler, ReentrancyGuard {
     }
 
     function deposit(uint256 amount) external nonReentrant {
-        console.log("Sender", msg.sender);
-        IERC20(USDC).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(USDC).safeApprove(address(swapRouter), amount);
-        uint256 balance = IERC20(USDC).balanceOf(address(this));
-
-        console.log("Balance", balance);
-        depositInfo[msg.sender] += amount;
-        totalDepositedAmount += amount;
-        if (!isDepositUser[msg.sender]) {
-            ++totalDepositedUser;
-        }
-        isDepositUser[msg.sender] = true;
-    }
-
-    function withdraw(uint256 amount) external nonReentrant {
-        _requireMsg(
-            depositInfo[msg.sender] >= amount,
-            "withdraw",
-            "You don't have amount to withdraw"
-        );
-
-        depositInfo[msg.sender] -= amount;
-        IERC20(USDC).safeTransfer(msg.sender, depositInfo[msg.sender]);
-    }
-
-    function compound() external {
+        _tokenApprove(USDC, address(swapRouter), amount);
         IUniswapRouterV3.ExactInputSingleParams memory params = IUniswapRouterV3
             .ExactInputSingleParams({
                 tokenIn: USDC,
@@ -77,12 +52,13 @@ contract UniV3Handler is BaseHandler, ReentrancyGuard {
                 fee: FEE_TIER,
                 recipient: address(this),
                 deadline: block.timestamp,
-                amountIn: depositInfo[msg.sender],
+                amountIn: amount,
                 amountOutMinimum: 0,
                 sqrtPriceLimitX96: 0
             });
         uint256 amountOut = swapRouter.exactInputSingle(params);
-        IERC20(WETH9).safeApprove(address(sushiRouter), amountOut);
+
+        _tokenApprove(WETH9, address(sushiRouter), amount);
 
         address[] memory swapPath = new address[](2);
         swapPath[0] = WETH9;
@@ -94,21 +70,12 @@ contract UniV3Handler is BaseHandler, ReentrancyGuard {
             address(this),
             block.timestamp + 100
         );
-        uint256 profit = amountsOut[amountsOut.length - 1] -
-            depositInfo[msg.sender];
-        totalProfitAmount += profit;
-        devFeeAmount += (profit * devFee) / 10000;
-        depositInfo[msg.sender] =
-            amountsOut[amountsOut.length - 1] -
-            ((profit * devFee) / 10000);
+
+        console.log("USDC Amount Out:", amountsOut[amountsOut.length - 1]);
     }
 
     /* solhint-disable no-empty-blocks */
     function execStrategy(bytes memory data) public payable {}
-
-    function getAPY() public view returns (uint256) {
-        return (totalProfitAmount * 10000) / totalDepositedAmount;
-    }
 
     function getContractName() public pure override returns (string memory) {
         return "UniswapV3 Handler";
