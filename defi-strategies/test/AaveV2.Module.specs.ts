@@ -21,7 +21,7 @@ import {
 } from "./utils/setupHelper";
 import { getTokenProvider } from "./utils/providers";
 
-describe("Strategy Module", async () => {
+describe("AaveV2 deposit & withdraw", async () => {
   const chainId = hardhat.network.config.chainId;
   if (chainId === 1 || chainId === 137) {
     // This test supports to run on these chains.
@@ -113,9 +113,13 @@ describe("Strategy Module", async () => {
       value: ethers.utils.parseEther("10"),
     });
 
+    const callbackHandler = await (
+      await ethers.getContractFactory("FlashloanCallbackHandler")
+    ).deploy();
+
     aaveV2handler = await (
       await ethers.getContractFactory("AaveV2Handler")
-    ).deploy(WRAPPED_NATIVE_TOKEN, AAVEPROTOCOL_V2_PROVIDER);
+    ).deploy(WRAPPED_NATIVE_TOKEN, AAVEPROTOCOL_V2_PROVIDER, callbackHandler.address);
 
     strategyModule = await getStrategyModule(
       alice.address,
