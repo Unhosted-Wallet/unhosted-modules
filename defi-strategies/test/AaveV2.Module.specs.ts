@@ -119,7 +119,11 @@ describe("AaveV2 deposit & withdraw", async () => {
 
     aaveV2handler = await (
       await ethers.getContractFactory("AaveV2Handler")
-    ).deploy(WRAPPED_NATIVE_TOKEN, AAVEPROTOCOL_V2_PROVIDER, callbackHandler.address);
+    ).deploy(
+      WRAPPED_NATIVE_TOKEN,
+      AAVEPROTOCOL_V2_PROVIDER,
+      callbackHandler.address
+    );
 
     strategyModule = await getStrategyModule(
       alice.address,
