@@ -3,7 +3,6 @@ pragma solidity 0.8.17;
 
 /* solhint-disable no-empty-blocks */
 import {IFlashLoanReceiver} from "./IFlashLoanReceiver.sol";
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
@@ -11,16 +10,13 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  *   @dev Handles EIP-1271 compliant isValidSignature requests.
  *  @notice inspired by Richard Meissner's <richard@gnosis.pm> implementation
  */
-contract FlashloanCallbackHandler is
-    IFlashLoanReceiver
-{
-
+contract FlashloanCallbackHandler is IFlashLoanReceiver {
     function executeOperation(
-        address[] calldata assets,
-        uint256[] calldata amounts,
-        uint256[] calldata premiums,
-        address initiator,
-        bytes calldata params
+        address[] calldata,
+        uint256[] calldata,
+        uint256[] calldata,
+        address,
+        bytes calldata
     ) external virtual returns (bool) {
         // execute logic on flashloan receive
         return true;
