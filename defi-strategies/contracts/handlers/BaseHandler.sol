@@ -21,7 +21,7 @@ abstract contract BaseHandler {
         address spender,
         uint256 amount
     ) internal {
-        solhint-disable
+        /* solhint-disable no-empty-blocks */
         try IERC20Usdt(token).approve(spender, amount) {} catch {
             IERC20(token).safeApprove(spender, 0);
             IERC20(token).safeApprove(spender, amount);
