@@ -2,23 +2,22 @@ import { expect } from "chai";
 import { Contract } from "ethers";
 import { decodeError } from "ethers-decode-error";
 import hardhat, { ethers, deployments, waffle } from "hardhat";
-import { buildEcdsaModuleAuthorizedStrategyTx } from "./utils/execution";
-import { makeEcdsaModuleUserOp } from "./utils/userOp";
+import { buildEcdsaModuleAuthorizedStrategyTx } from "../utils/execution";
+import { makeEcdsaModuleUserOp } from "../utils/userOp";
 import {
   SUSHISWAP_ROUTER,
   UNISWAPV3_ROUTER,
   USDC_TOKEN,
   WRAPPED_NATIVE_TOKEN,
-} from "./utils/constants_eth";
-import { MAX_UINT256 } from "./utils/constants";
+} from "../utils/constants_eth";
 
 import {
   getEntryPoint,
   getEcdsaOwnershipRegistryModule,
   getSmartAccountWithModule,
   getStrategyModule,
-} from "./utils/setupHelper";
-import { getTokenProvider } from "./utils/providers";
+} from "../utils/setupHelper";
+import { getTokenProvider } from "../utils/providers";
 
 describe("Strategy Module (UniV3)", async () => {
   const chainId = hardhat.network.config.chainId;
@@ -122,7 +121,7 @@ describe("Strategy Module (UniV3)", async () => {
   });
 
   describe("Deposit", () => {
-    it("deposit token normal", async () => {
+    it("Run arbitrage swap", async () => {
       const { userSA, ecdsaModule, errAbi } = await setupTests();
       const value = ethers.utils.parseUnits("100", 6);
 
