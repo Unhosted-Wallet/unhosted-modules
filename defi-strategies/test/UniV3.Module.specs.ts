@@ -90,7 +90,7 @@ describe("Strategy Module (UniV3)", async () => {
 
     uniV3Handler = await (
       await ethers.getContractFactory("UniV3Handler")
-    ).deploy(UNISWAPV3_ROUTER, SUSHISWAP_ROUTER, "100", developer.address);
+    ).deploy(UNISWAPV3_ROUTER, SUSHISWAP_ROUTER);
 
     strategyModule = await getStrategyModule(
       alice.address,
@@ -165,7 +165,7 @@ describe("Strategy Module (UniV3)", async () => {
         console.log(error);
       }
       const afterExecBalance = await usdcToken.balanceOf(userSA.address);
-
+      console.log(afterExecBalance)
       expect(afterExecBalance).to.be.eq(value);
     });
   });

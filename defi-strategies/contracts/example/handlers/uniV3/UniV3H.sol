@@ -4,9 +4,9 @@ pragma solidity 0.8.17;
 
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {BaseHandler} from "../BaseHandler.sol";
-import {IUniswapRouterV3} from "../interfaces/common/IUniswapRouterV3.sol";
-import {IUniswapRouterETH} from "../interfaces/common/IUniswapRouterETH.sol";
+import {BaseHandler} from "../../../handlers/BaseHandler.sol";
+import {IUniswapRouterV3} from "./IUniswapRouterV3.sol";
+import {IUniswapRouterETH} from "./IUniswapRouterETH.sol";
 
 contract UniV3Handler is BaseHandler, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -18,32 +18,17 @@ contract UniV3Handler is BaseHandler, ReentrancyGuard {
     address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     uint24 public constant FEE_TIER = 3000; // 0.3% fee tier pool
 
-    mapping(address => uint256) public depositInfo;
-    mapping(address => bool) public isDepositUser;
-
-    address public immutable devAddress;
-    uint256 public immutable devFee; // 1% = 100
-
-    uint256 public totalDepositedUser;
-    uint256 public totalDepositedAmount;
-    uint256 public totalProfitAmount;
-    uint256 public devFeeAmount;
-
     constructor(
         IUniswapRouterV3 swapRouter_,
-        IUniswapRouterETH sushiRouter_,
-        uint256 devFee_,
-        address devAddress_
+        IUniswapRouterETH sushiRouter_
     ) {
         swapRouter = swapRouter_;
         sushiRouter = sushiRouter_;
-        devFee = devFee_;
-        devAddress = devAddress_;
     }
 
     function deposit(
         uint256 amount
-    ) external nonReentrant returns (uint256[] memory) {
+    ) external nonReentrant returns (uint256[] memory){
         _tokenApprove(USDC, address(swapRouter), amount);
         IUniswapRouterV3.ExactInputSingleParams memory params = IUniswapRouterV3
             .ExactInputSingleParams({
@@ -65,7 +50,7 @@ contract UniV3Handler is BaseHandler, ReentrancyGuard {
         swapPath[1] = USDC;
         uint256[] memory amountsOut = sushiRouter.swapExactTokensForTokens(
             amountOut,
-            depositInfo[msg.sender],
+            amount,
             swapPath,
             address(this),
             block.timestamp + 100
@@ -73,10 +58,7 @@ contract UniV3Handler is BaseHandler, ReentrancyGuard {
         return amountsOut;
     }
 
-    /* solhint-disable no-empty-blocks */
-    function execStrategy(bytes memory data) public payable {}
-
     function getContractName() public pure override returns (string memory) {
-        return "UniswapV3 Handler";
+        return "UniswapV3 Example Handler";
     }
 }
