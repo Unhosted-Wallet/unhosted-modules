@@ -14,14 +14,17 @@ contract AaveV2Handler is BaseHandler {
 
     address public immutable provider;
     address public immutable wrappedNativeToken;
+    address public immutable fallbackHandler;
 
-    constructor(address wrappedNativeToken_, address provider_) {
+    constructor(
+        address wrappedNativeToken_,
+        address provider_,
+        address fallbackHandler_
+    ) {
         wrappedNativeToken = wrappedNativeToken_;
         provider = provider_;
+        fallbackHandler = fallbackHandler_;
     }
-
-    /* solhint-disable no-empty-blocks */
-    function execStrategy(bytes memory data) public payable {}
 
     function deposit(
         address asset,
@@ -86,6 +89,67 @@ contract AaveV2Handler is BaseHandler {
         IWrappedNativeToken(wrappedNativeToken).withdraw(amount);
     }
 
+    function flashLoan(
+        address[] calldata assets,
+        uint256[] calldata amounts,
+        uint256[] calldata modes,
+        bytes calldata params
+    ) public payable {
+        _requireMsg(
+            assets.length == amounts.length,
+            "flashLoan",
+            "assets and amounts do not match"
+        );
+
+        _requireMsg(
+            assets.length == modes.length,
+            "flashLoan",
+            "assets and modes do not match"
+        );
+
+        address handler;
+        address flashloanHandler = fallbackHandler;
+        address onBehalfOf = address(this);
+        address pool = ILendingPoolAddressesProviderV2(provider)
+            .getLendingPool();
+
+        for (uint256 i = 0; i < assets.length; i++) {
+            _tokenApprove(assets[i], pool, type(uint256).max);
+        }
+
+        assembly {
+            handler := sload(FALLBACK_HANDLER_STORAGE_SLOT)
+
+            sstore(FALLBACK_HANDLER_STORAGE_SLOT, flashloanHandler)
+        }
+
+        /* solhint-disable no-empty-blocks */
+        try
+            ILendingPoolV2(pool).flashLoan(
+                address(this),
+                assets,
+                amounts,
+                modes,
+                onBehalfOf,
+                params,
+                0
+            )
+        {} catch Error(string memory reason) {
+            _revertMsg("flashLoan", reason);
+        } catch {
+            _revertMsg("flashLoan");
+        }
+
+        assembly {
+            sstore(FALLBACK_HANDLER_STORAGE_SLOT, handler)
+        }
+
+        // approve lending pool zero
+        for (uint256 i = 0; i < assets.length; i++) {
+            _tokenApproveZero(assets[i], pool);
+        }
+    }
+
     function getContractName() public pure override returns (string memory) {
         return "HAaveProtocolV2";
     }
@@ -98,6 +162,7 @@ contract AaveV2Handler is BaseHandler {
         _tokenApprove(asset, pool, amount);
         uint256 beforeATokenAmount = IERC20(aToken).balanceOf(address(this));
 
+        /* solhint-disable no-empty-blocks */
         try
             ILendingPoolV2(pool).deposit(asset, amount, address(this), 0)
         {} catch Error(string memory reason) {
@@ -143,6 +208,7 @@ contract AaveV2Handler is BaseHandler {
             .getLendingPool();
         _tokenApprove(asset, pool, amount);
 
+        /* solhint-disable no-empty-blocks */
         try
             ILendingPoolV2(pool).repay(asset, amount, rateMode, onBehalfOf)
         {} catch Error(string memory reason) {
@@ -169,6 +235,7 @@ contract AaveV2Handler is BaseHandler {
         address pool = ILendingPoolAddressesProviderV2(provider)
             .getLendingPool();
 
+        /* solhint-disable no-empty-blocks */
         try
             ILendingPoolV2(pool).borrow(asset, amount, rateMode, 0, onBehalfOf)
         {} catch Error(string memory reason) {
