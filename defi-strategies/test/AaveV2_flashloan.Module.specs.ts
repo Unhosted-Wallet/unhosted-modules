@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Contract } from "ethers";
+import { BigNumber, Contract } from "ethers";
 import { decodeError } from "ethers-decode-error";
 import hardhat, { ethers, deployments, waffle } from "hardhat";
 import { buildEcdsaModuleAuthorizedStrategyTx } from "./utils/execution";
@@ -39,6 +39,10 @@ describe("AaveV2 flashloan", async () => {
   let providerAddress: any;
   let wethProviderAddress: any;
   let fee: any;
+
+  const _getFlashloanFee = (value: BigNumber) => {
+    return value.mul(9).div(10000);
+  };
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
@@ -158,7 +162,7 @@ describe("AaveV2 flashloan", async () => {
         [[token.address], [value], [AAVE_RATEMODE.NODEBT], "0x"]
       );
 
-      const loanFee = value.mul(9).div(10000);
+      // const loanFee = value.mul(9).div(10000);
 
       await token.connect(providerAddress).transfer(userSA.address, value);
 
@@ -191,7 +195,9 @@ describe("AaveV2 flashloan", async () => {
 
       const afterExecBalance = await token.balanceOf(userSA.address);
 
-      expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(loanFee);
+      expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
+        _getFlashloanFee(value)
+      );
 
       expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
     });
@@ -274,8 +280,6 @@ describe("AaveV2 flashloan", async () => {
         ]
       );
 
-      const loanFee = value.mul(9).div(10000);
-
       await token.connect(providerAddress).transfer(userSA.address, value);
       await WrappedETH.connect(wethProviderAddress).transfer(
         userSA.address,
@@ -313,8 +317,12 @@ describe("AaveV2 flashloan", async () => {
       const afterExecBalance = await token.balanceOf(userSA.address);
       const afterExecBalanceWeth = await WrappedETH.balanceOf(userSA.address);
 
-      expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(loanFee);
-      expect(beforeExecBalanceWeth.sub(afterExecBalanceWeth)).to.be.eq(loanFee);
+      expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
+        _getFlashloanFee(value)
+      );
+      expect(beforeExecBalanceWeth.sub(afterExecBalanceWeth)).to.be.eq(
+        _getFlashloanFee(value)
+      );
 
       expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
     });
