@@ -13,10 +13,6 @@ contract CompoundV3Handler is BaseHandler {
         wrappedNativeToken = wrappedNativeToken_;
     }
 
-    function getContractName() public pure override returns (string memory) {
-        return "HCompoundV3";
-    }
-
     function supply(
         address comet,
         address asset,
@@ -159,6 +155,10 @@ contract CompoundV3Handler is BaseHandler {
         );
     }
 
+    function getContractName() public pure override returns (string memory) {
+        return "HCompoundV3";
+    }
+
     /* ========== INTERNAL FUNCTIONS ========== */
 
     function _supply(
@@ -168,6 +168,7 @@ contract CompoundV3Handler is BaseHandler {
         uint256 amount
     ) internal {
         _tokenApprove(asset, comet, amount);
+        /* solhint-disable no-empty-blocks */
         try IComet(comet).supplyTo(dst, asset, amount) {} catch Error(
             string memory reason
         ) {
