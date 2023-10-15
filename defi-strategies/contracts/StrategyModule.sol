@@ -2,8 +2,8 @@
 pragma solidity 0.8.17;
 
 import {ISignatureValidator, ISignatureValidatorConstants} from "./interfaces/ISignatureValidator.sol";
-import {Enum} from "./Enum.sol";
-import {ReentrancyGuard} from "./ReentrancyGuard.sol";
+import {Enum} from "./common/Enum.sol";
+import {ReentrancyGuard} from "./common/ReentrancyGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IExecFromModule, IStrategyModule} from "./interfaces/IStrategyModule.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";

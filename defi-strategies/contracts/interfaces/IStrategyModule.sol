@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import {Enum} from "../Enum.sol";
+import {Enum} from "../common/Enum.sol";
 
 interface IExecFromModule {
     function execTransactionFromModule(

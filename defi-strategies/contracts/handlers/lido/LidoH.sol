@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+/// This is developed and simplified based on HLido.sol by Furucombo
 
 pragma solidity 0.8.17;
 
