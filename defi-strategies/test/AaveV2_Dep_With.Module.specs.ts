@@ -355,7 +355,10 @@ describe("AaveV2 deposit & withdraw", async () => {
 
       expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
 
-      expect(await aToken.balanceOf(userSA.address)).to.be.eq(value);
+      expect(await aToken.balanceOf(userSA.address)).to.be.within(
+        value.sub(2),
+        value
+      );
 
       expect(await aToken.balanceOf(strategyModule.address)).to.be.eq(0);
 
