@@ -106,7 +106,7 @@ const config: HardhatUserConfig = {
     onlyCalledMethods: true,
   },
   dependencyCompiler: {
-    paths: ["@account-abstraction/contracts/core/EntryPoint.sol"],
+    paths: ["@account-abstraction/contracts/core/EntryPoint.sol", "smart-account/contracts/SmartAccount.sol", "smart-account/contracts/factory/SmartAccountFactory.sol", "smart-account/contracts/authorization/EcdsaOwnershipRegistryModule.sol", "smart-account/contracts/mocks/MockToken.sol"],
   },
   etherscan: {
     apiKey: {
