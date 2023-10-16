@@ -1,0 +1,34 @@
+{
+  "name": "@unhosted/handlers",
+  "version": "0.1.0",
+  "description": "Defi protocol handler contracts for Unhosted wallet. Works with Unhosted strategy modules.",
+  "scripts": {
+    "prepack": "pinst --disable",
+    "postpack": "pinst --enable"
+  },
+  "bugs": {
+    "url": "https://github.com/Unhosted-Wallet/unhosted-modules/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Unhosted-Wallet/unhosted-modules.git"
+  },
+  "homepage": "https://github.com/Unhosted-Wallet/unhosted-modules/",
+  "keywords": [
+    "Account Abstraction",
+    "Smart Account",
+    "ERC4337",
+    "ERC6900",
+    "ERC-4337",
+    "ERC-6900",
+    "Unhosted",
+    "@Unhosted-Wallet",
+    "Unhosted Wallet",
+    "Modules"
+  ],
+  "author": "Unhosted",
+  "license": "MIT",
+  "devDependencies": {
+    "@openzeppelin/contracts": "^4.9.3"
+  }
+}
