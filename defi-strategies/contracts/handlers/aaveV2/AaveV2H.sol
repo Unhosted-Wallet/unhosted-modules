@@ -13,15 +13,15 @@ contract AaveV2Handler is BaseHandler {
     using SafeERC20 for IERC20;
 
     address public immutable provider;
-    address public immutable wrappedNativeToken;
     address public immutable fallbackHandler;
+    IWrappedNativeToken public immutable wrappedNativeTokenAaveV2;
 
     constructor(
         address wrappedNativeToken_,
         address provider_,
         address fallbackHandler_
     ) {
-        wrappedNativeToken = wrappedNativeToken_;
+        wrappedNativeTokenAaveV2 = IWrappedNativeToken(wrappedNativeToken_);
         provider = provider_;
         fallbackHandler = fallbackHandler_;
     }
@@ -38,8 +38,8 @@ contract AaveV2Handler is BaseHandler {
         uint256 amount
     ) public payable returns (uint256 depositAmount) {
         amount = _getBalance(NATIVE_TOKEN_ADDRESS, amount);
-        IWrappedNativeToken(wrappedNativeToken).deposit{value: amount}();
-        depositAmount = _deposit(wrappedNativeToken, amount);
+        wrappedNativeTokenAaveV2.deposit{value: amount}();
+        depositAmount = _deposit(address(wrappedNativeTokenAaveV2), amount);
     }
 
     function withdraw(
@@ -52,8 +52,8 @@ contract AaveV2Handler is BaseHandler {
     function withdrawETH(
         uint256 amount
     ) public payable returns (uint256 withdrawAmount) {
-        withdrawAmount = _withdraw(wrappedNativeToken, amount);
-        IWrappedNativeToken(wrappedNativeToken).withdraw(withdrawAmount);
+        withdrawAmount = _withdraw(address(wrappedNativeTokenAaveV2), amount);
+        wrappedNativeTokenAaveV2.withdraw(withdrawAmount);
     }
 
     function repay(
@@ -70,8 +70,13 @@ contract AaveV2Handler is BaseHandler {
         uint256 rateMode,
         address onBehalfOf
     ) public payable returns (uint256 remainDebt) {
-        IWrappedNativeToken(wrappedNativeToken).deposit{value: amount}();
-        remainDebt = _repay(wrappedNativeToken, amount, rateMode, onBehalfOf);
+        wrappedNativeTokenAaveV2.deposit{value: amount}();
+        remainDebt = _repay(
+            address(wrappedNativeTokenAaveV2),
+            amount,
+            rateMode,
+            onBehalfOf
+        );
     }
 
     function borrow(
@@ -85,8 +90,13 @@ contract AaveV2Handler is BaseHandler {
 
     function borrowETH(uint256 amount, uint256 rateMode) public payable {
         address onBehalfOf = address(this);
-        _borrow(wrappedNativeToken, amount, rateMode, onBehalfOf);
-        IWrappedNativeToken(wrappedNativeToken).withdraw(amount);
+        _borrow(
+            address(wrappedNativeTokenAaveV2),
+            amount,
+            rateMode,
+            onBehalfOf
+        );
+        wrappedNativeTokenAaveV2.withdraw(amount);
     }
 
     function flashLoan(
@@ -150,7 +160,13 @@ contract AaveV2Handler is BaseHandler {
         }
     }
 
-    function getContractName() public pure override returns (string memory) {
+    function getContractName()
+        public
+        pure
+        virtual
+        override
+        returns (string memory)
+    {
         return "HAaveProtocolV2";
     }
 

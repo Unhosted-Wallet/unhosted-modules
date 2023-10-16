@@ -8,10 +8,10 @@ import {IWrappedNativeToken} from "../wrappednativetoken/IWrappedNativeToken.sol
 import {IComet} from "./IComet.sol";
 
 contract CompoundV3Handler is BaseHandler {
-    address public immutable wrappedNativeToken;
+    IWrappedNativeToken public immutable wrappedNativeTokenCompV3;
 
     constructor(address wrappedNativeToken_) {
-        wrappedNativeToken = wrappedNativeToken_;
+        wrappedNativeTokenCompV3 = IWrappedNativeToken(wrappedNativeToken_);
     }
 
     function supply(
@@ -32,12 +32,12 @@ contract CompoundV3Handler is BaseHandler {
     function supplyETH(address comet, uint256 amount) external payable {
         _requireMsg(amount != 0, "supplyETH", "zero amount");
         amount = _getBalance(NATIVE_TOKEN_ADDRESS, amount);
-        IWrappedNativeToken(wrappedNativeToken).deposit{value: amount}();
+        wrappedNativeTokenCompV3.deposit{value: amount}();
 
         _supply(
             comet,
             address(this), // Return to address(this)
-            wrappedNativeToken,
+            address(wrappedNativeTokenCompV3),
             amount
         );
     }
@@ -73,13 +73,13 @@ contract CompoundV3Handler is BaseHandler {
         (withdrawAmount, isBorrowed) = _withdraw(
             comet,
             address(this), // from
-            wrappedNativeToken,
+            address(wrappedNativeTokenCompV3),
             amount
         );
 
         // Borrow is not allowed
         _requireMsg(!isBorrowed, "withdrawETH", "borrow");
-        IWrappedNativeToken(wrappedNativeToken).withdraw(withdrawAmount);
+        wrappedNativeTokenCompV3.withdraw(withdrawAmount);
     }
 
     function borrow(
@@ -106,7 +106,7 @@ contract CompoundV3Handler is BaseHandler {
         uint256 amount
     ) external payable returns (uint256 borrowAmount) {
         _requireMsg(
-            IComet(comet).baseToken() == wrappedNativeToken,
+            IComet(comet).baseToken() == address(wrappedNativeTokenCompV3),
             "borrowETH",
             "wrong comet"
         );
@@ -116,13 +116,13 @@ contract CompoundV3Handler is BaseHandler {
         (borrowAmount, isBorrowed) = _withdraw(
             comet,
             address(this), // from
-            wrappedNativeToken,
+            address(wrappedNativeTokenCompV3),
             amount
         );
 
         // Withdrawal is not allowed
         _requireMsg(isBorrowed, "borrowETH", "withdraw");
-        IWrappedNativeToken(wrappedNativeToken).withdraw(borrowAmount);
+        wrappedNativeTokenCompV3.withdraw(borrowAmount);
     }
 
     function repay(address comet, uint256 amount) external payable {
@@ -140,23 +140,29 @@ contract CompoundV3Handler is BaseHandler {
 
     function repayETH(address comet, uint256 amount) external payable {
         _requireMsg(
-            IComet(comet).baseToken() == wrappedNativeToken,
+            IComet(comet).baseToken() == address(wrappedNativeTokenCompV3),
             "repayETH",
             "wrong comet"
         );
         _requireMsg(amount != 0, "repayETH", "zero amount");
 
         amount = _getBalance(NATIVE_TOKEN_ADDRESS, amount);
-        IWrappedNativeToken(wrappedNativeToken).deposit{value: amount}();
+        wrappedNativeTokenCompV3.deposit{value: amount}();
         _supply(
             comet,
             address(this), // to
-            wrappedNativeToken,
+            address(wrappedNativeTokenCompV3),
             amount
         );
     }
 
-    function getContractName() public pure override returns (string memory) {
+    function getContractName()
+        public
+        pure
+        virtual
+        override
+        returns (string memory)
+    {
         return "HCompoundV3";
     }
 

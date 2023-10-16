@@ -16,13 +16,13 @@ contract UniswapV3Handler is BaseHandler {
     // prettier-ignore
     ISwapRouter public constant ROUTER = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     // prettier-ignore
-    IWrappedNativeToken public immutable wrappedNativeToken;
+    IWrappedNativeToken public immutable wrappedNativeTokenUniV3;
 
     uint256 private constant PATH_SIZE = 43; // address + address + uint24
     uint256 private constant ADDRESS_SIZE = 20;
 
     constructor(address wrappedNativeToken_) {
-        wrappedNativeToken = IWrappedNativeToken(wrappedNativeToken_);
+        wrappedNativeTokenUniV3 = IWrappedNativeToken(wrappedNativeToken_);
     }
 
     function exactInputSingleFromEther(
@@ -34,7 +34,7 @@ contract UniswapV3Handler is BaseHandler {
     ) external payable returns (uint256 amountOut) {
         // Build params for router call
         ISwapRouter.ExactInputSingleParams memory params;
-        params.tokenIn = address(wrappedNativeToken);
+        params.tokenIn = address(wrappedNativeTokenUniV3);
         params.tokenOut = tokenOut;
         params.fee = fee;
         params.amountIn = _getBalance(address(0), amountIn);
@@ -54,7 +54,7 @@ contract UniswapV3Handler is BaseHandler {
         // Build params for router call
         ISwapRouter.ExactInputSingleParams memory params;
         params.tokenIn = tokenIn;
-        params.tokenOut = address(wrappedNativeToken);
+        params.tokenOut = address(wrappedNativeTokenUniV3);
         params.fee = fee;
         params.amountIn = _getBalance(tokenIn, amountIn);
         params.amountOutMinimum = amountOutMinimum;
@@ -64,7 +64,7 @@ contract UniswapV3Handler is BaseHandler {
         _tokenApprove(tokenIn, address(ROUTER), params.amountIn);
         amountOut = _exactInputSingle(0, params);
         _tokenApproveZero(tokenIn, address(ROUTER));
-        wrappedNativeToken.withdraw(amountOut);
+        wrappedNativeTokenUniV3.withdraw(amountOut);
     }
 
     function exactInputSingle(
@@ -99,7 +99,7 @@ contract UniswapV3Handler is BaseHandler {
         address tokenIn = _getFirstToken(path);
         // Input token must be WETH
         _requireMsg(
-            tokenIn == address(wrappedNativeToken),
+            tokenIn == address(wrappedNativeTokenUniV3),
             "exactInputFromEther",
             "Input not wrapped native token"
         );
@@ -122,7 +122,7 @@ contract UniswapV3Handler is BaseHandler {
         address tokenOut = _getLastToken(path);
         // Output token must be WETH
         _requireMsg(
-            tokenOut == address(wrappedNativeToken),
+            tokenOut == address(wrappedNativeTokenUniV3),
             "exactInputToEther",
             "Output not wrapped native token"
         );
@@ -136,7 +136,7 @@ contract UniswapV3Handler is BaseHandler {
         _tokenApprove(tokenIn, address(ROUTER), params.amountIn);
         amountOut = _exactInput(0, params);
         _tokenApproveZero(tokenIn, address(ROUTER));
-        wrappedNativeToken.withdraw(amountOut);
+        wrappedNativeTokenUniV3.withdraw(amountOut);
     }
 
     function exactInput(
@@ -167,7 +167,7 @@ contract UniswapV3Handler is BaseHandler {
     ) external payable returns (uint256 amountIn) {
         // Build params for router call
         ISwapRouter.ExactOutputSingleParams memory params;
-        params.tokenIn = address(wrappedNativeToken);
+        params.tokenIn = address(wrappedNativeTokenUniV3);
         params.tokenOut = tokenOut;
         params.fee = fee;
         params.amountOut = amountOut;
@@ -189,7 +189,7 @@ contract UniswapV3Handler is BaseHandler {
         // Build params for router call
         ISwapRouter.ExactOutputSingleParams memory params;
         params.tokenIn = tokenIn;
-        params.tokenOut = address(wrappedNativeToken);
+        params.tokenOut = address(wrappedNativeTokenUniV3);
         params.fee = fee;
         params.amountOut = amountOut;
         // if amount == type(uint256).max return balance of Proxy
@@ -200,7 +200,7 @@ contract UniswapV3Handler is BaseHandler {
         _tokenApprove(params.tokenIn, address(ROUTER), params.amountInMaximum);
         amountIn = _exactOutputSingle(0, params);
         _tokenApproveZero(params.tokenIn, address(ROUTER));
-        wrappedNativeToken.withdraw(params.amountOut);
+        wrappedNativeTokenUniV3.withdraw(params.amountOut);
     }
 
     function exactOutputSingle(
@@ -237,7 +237,7 @@ contract UniswapV3Handler is BaseHandler {
         address tokenIn = _getLastToken(path);
         // Input token must be WETH
         _requireMsg(
-            tokenIn == address(wrappedNativeToken),
+            tokenIn == address(wrappedNativeTokenUniV3),
             "exactOutputFromEther",
             "Input not wrapped native token"
         );
@@ -262,7 +262,7 @@ contract UniswapV3Handler is BaseHandler {
         address tokenOut = _getFirstToken(path);
         // Out token must be WETH
         _requireMsg(
-            tokenOut == address(wrappedNativeToken),
+            tokenOut == address(wrappedNativeTokenUniV3),
             "exactOutputToEther",
             "Output not wrapped native token"
         );
@@ -277,7 +277,7 @@ contract UniswapV3Handler is BaseHandler {
         _tokenApprove(tokenIn, address(ROUTER), params.amountInMaximum);
         amountIn = _exactOutput(0, params);
         _tokenApproveZero(tokenIn, address(ROUTER));
-        wrappedNativeToken.withdraw(amountOut);
+        wrappedNativeTokenUniV3.withdraw(amountOut);
     }
 
     function exactOutput(
@@ -301,7 +301,13 @@ contract UniswapV3Handler is BaseHandler {
         _tokenApproveZero(tokenIn, address(ROUTER));
     }
 
-    function getContractName() public pure override returns (string memory) {
+    function getContractName()
+        public
+        pure
+        virtual
+        override
+        returns (string memory)
+    {
         return "UniswapV3H";
     }
 

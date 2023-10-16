@@ -25,6 +25,7 @@ contract StrategyModule is
     // Domain Seperators keccak256("EIP712Domain(uint256 chainId,address verifyingContract)");
     bytes32 internal constant DOMAIN_SEPARATOR_TYPEHASH =
         0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
+
     //ExecuteStrategy
     // solhint-disable-next-line
     // keccak256("ExecuteStrategy(address handler,uint256 value,bytes data,uint256 nonce)");
@@ -74,7 +75,7 @@ contract StrategyModule is
      * module is enabled and SA owner signed the data
      */
     function execStrategy(
-        address strategyModule,
+        address smartAccount,
         StrategyTransaction memory _tx,
         bytes memory signatures
     ) public payable virtual nonReentrant returns (bool success) {
@@ -82,14 +83,14 @@ contract StrategyModule is
 
         {
             bytes memory txHashData = encodeStrategyData(
-                strategyModule,
+                smartAccount,
                 _tx,
-                nonces[strategyModule]++
+                nonces[smartAccount]++
             );
 
             txHash = keccak256(txHashData);
             if (
-                ISignatureValidator(strategyModule).isValidSignature(
+                ISignatureValidator(smartAccount).isValidSignature(
                     txHash,
                     signatures
                 ) != EIP1271_MAGIC_VALUE
@@ -100,7 +101,7 @@ contract StrategyModule is
 
         {
             uint256 startGas = gasleft();
-            success = IExecFromModule(strategyModule).execTransactionFromModule(
+            success = IExecFromModule(smartAccount).execTransactionFromModule(
                 handler,
                 _tx.value,
                 _tx.data,
@@ -148,25 +149,26 @@ contract StrategyModule is
     /**
      * @dev Returns hash to be signed by owner.
      * @param _nonce Transaction nonce.
-     * @param strategyModule Address of the Smart Account to execute the txn.
+     * @param smartAccount Address of the Smart Account to execute the txn.
      * @return Transaction hash.
      */
     function getTransactionHash(
         StrategyTransaction calldata _tx,
         uint256 _nonce,
-        address strategyModule
+        address smartAccount
     ) public view returns (bytes32) {
-        return keccak256(encodeStrategyData(strategyModule, _tx, _nonce));
+        return keccak256(encodeStrategyData(smartAccount, _tx, _nonce));
     }
 
     /**
      * @dev Returns the bytes that are hashed to be signed by owner.
+     * @param smartAccount Address of the Smart Account to execute the txn.
      * @param _tx The strategy transaction data to be signed.
      * @param _nonce Transaction nonce.
      * @return strategyHash bytes that are hashed to be signed by the owner.
      */
     function encodeStrategyData(
-        address strategyModule,
+        address smartAccount,
         StrategyTransaction memory _tx,
         uint256 _nonce
     ) public view returns (bytes memory) {
@@ -183,32 +185,33 @@ contract StrategyModule is
             bytes.concat(
                 bytes1(0x19),
                 bytes1(0x01),
-                domainSeparator(strategyModule),
+                domainSeparator(smartAccount),
                 strategyHash
             );
     }
 
     /**
      * @dev returns a value from the nonces 2d mapping
-     * @param strategyModule : address of smart account to get nonce
+     * @param smartAccount address of smart account to get nonce
      * @return nonce : the number of transactions made by smart account
      */
     function getNonce(
-        address strategyModule
+        address smartAccount
     ) public view virtual returns (uint256) {
-        return nonces[strategyModule];
+        return nonces[smartAccount];
     }
 
     /**
      * @dev Returns the domain separator for this contract, as defined in the EIP-712 standard.
+     * @param smartAccount Address of the Smart Account as verifying contract address
      * @return bytes32 The domain separator hash.
      */
     function domainSeparator(
-        address strategyModule
+        address smartAccount
     ) public view returns (bytes32) {
         return
             keccak256(
-                abi.encode(DOMAIN_SEPARATOR_TYPEHASH, CHAIN_ID, strategyModule)
+                abi.encode(DOMAIN_SEPARATOR_TYPEHASH, CHAIN_ID, smartAccount)
             );
     }
 

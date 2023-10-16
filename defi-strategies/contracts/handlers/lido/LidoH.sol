@@ -31,7 +31,13 @@ contract LidoHandler is BaseHandler {
         }
     }
 
-    function getContractName() public pure override returns (string memory) {
+    function getContractName()
+        public
+        pure
+        virtual
+        override
+        returns (string memory)
+    {
         return "HLido";
     }
 }
