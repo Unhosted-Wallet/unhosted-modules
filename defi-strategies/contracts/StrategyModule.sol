@@ -37,7 +37,7 @@ contract StrategyModule is
         0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C;
 
     // solhint-disable-next-line
-    uint8 internal constant _feeFactor = 10; //0.1 %
+    uint16 internal constant _feeFactor = 5000; // 50%
 
     uint256 private immutable CHAIN_ID;
 
