@@ -11,7 +11,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Unhosted-Wallet/unhosted-modules.git"
+    "url": "https://github.com/Unhosted-Wallet/unhosted-modules.git",
+    "directory": "defi-strategies"
   },
   "homepage": "https://github.com/Unhosted-Wallet/unhosted-modules/",
   "keywords": [
