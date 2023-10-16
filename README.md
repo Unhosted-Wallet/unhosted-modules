@@ -1,4 +1,4 @@
-# <img src="logo.png" alt="Unhosted" height="100px">
+# <p align="center"><img src="logo.png" alt="Unhosted" height="100px"></p>
 Modules
 ===================
 
