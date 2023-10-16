@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-only
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 /**
  * @dev Interface of the ERC165 standard, as defined in the

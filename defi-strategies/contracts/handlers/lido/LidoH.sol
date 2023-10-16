@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /// This is developed and simplified based on HLido.sol by Furucombo
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import "../BaseHandler.sol";
 import "./ILido.sol";
