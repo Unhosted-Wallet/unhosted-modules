@@ -1,4 +1,5 @@
-Unhosted Modules
+# <p align="center"><img src="logo.png" alt="Unhosted" height="100px"></p>
+Modules
 ===================
 
 This repository contains a collection of modules that can be used with the [Biconomy smart accounts](https://github.com/bcnmy/scw-contracts)

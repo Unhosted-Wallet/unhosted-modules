@@ -1,7 +1,6 @@
 import * as dotenv from "dotenv";
 
 import { HardhatUserConfig, task } from "hardhat/config";
-
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
@@ -42,7 +41,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.17",
+        version: "0.8.20",
         settings: {
           optimizer: { enabled: true, runs: 800 },
           viaIR: true,
@@ -107,7 +106,7 @@ const config: HardhatUserConfig = {
     onlyCalledMethods: true,
   },
   dependencyCompiler: {
-    paths: ["@account-abstraction/contracts/core/EntryPoint.sol"],
+    paths: ["@account-abstraction/contracts/core/EntryPoint.sol", "smart-account/contracts/SmartAccount.sol", "smart-account/contracts/factory/SmartAccountFactory.sol", "smart-account/contracts/authorization/EcdsaOwnershipRegistryModule.sol", "smart-account/contracts/mocks/MockToken.sol"],
   },
   etherscan: {
     apiKey: {
