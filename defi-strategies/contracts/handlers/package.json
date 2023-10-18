@@ -1,6 +1,6 @@
 {
   "name": "@unhosted/handlers",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "description": "Defi protocol handler contracts for Unhosted wallet. Works with Unhosted strategy modules.",
   "scripts": {
     "prepack": "pinst --disable",
