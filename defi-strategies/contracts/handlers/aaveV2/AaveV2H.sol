@@ -8,8 +8,9 @@ import {ILendingPoolAddressesProviderV2} from "./ILendingPoolAddressesProviderV2
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {IWrappedNativeToken} from "../wrappednativetoken/IWrappedNativeToken.sol";
 import {BaseHandler} from "../BaseHandler.sol";
+import {IAaveV2Handler} from "./IAaveV2H.sol";
 
-contract AaveV2Handler is BaseHandler {
+contract AaveV2Handler is BaseHandler, IAaveV2Handler {
     using SafeERC20 for IERC20;
 
     address public immutable provider;

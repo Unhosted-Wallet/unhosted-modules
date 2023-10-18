@@ -3,10 +3,11 @@
 
 pragma solidity 0.8.20;
 
-import "../BaseHandler.sol";
-import "./ILido.sol";
+import {BaseHandler} from "../BaseHandler.sol";
+import {ILido} from "./ILido.sol";
+import {ILidoHandler} from "./ILidoH.sol";
 
-contract LidoHandler is BaseHandler {
+contract LidoHandler is BaseHandler, ILidoHandler {
     address public immutable referral;
     ILido public immutable lidoProxy;
 
