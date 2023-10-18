@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers, waffle } from "hardhat";
 import {
   Contract,
   Wallet,
@@ -116,6 +116,21 @@ export interface SmartAccountSignedStrategyTransaction {
   transaction: StrategyTransaction;
   signature: string;
 }
+
+export const call = async (
+  contract: Contract,
+  functionName: string,
+  params: any[],
+  output: string[]
+): Promise<any> => {
+  const data = contract.interface.encodeFunctionData(functionName, params);
+  const txRes = await waffle.provider.call({
+    to: contract.address,
+    data: data,
+  });
+  const result = ethers.utils.defaultAbiCoder.decode(output, txRes);
+  return result;
+};
 
 export const calculateSafeDomainSeparator = (
   safe: Contract,

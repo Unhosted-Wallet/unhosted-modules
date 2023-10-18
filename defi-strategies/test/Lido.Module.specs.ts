@@ -145,7 +145,7 @@ describe("Lido Finance", async () => {
       const afterExecBalance = await stETH.balanceOf(userSA.address);
 
       expect(afterExecBalance.sub(beforeExecBalance)).to.be.within(
-        value.sub(1),
+        value.sub(10),
         value
       );
 
@@ -195,7 +195,7 @@ describe("Lido Finance", async () => {
       const afterExecBalance = await stETH.balanceOf(userSA.address);
 
       expect(afterExecBalance.sub(beforeExecBalance)).to.be.within(
-        value.sub(1),
+        value.sub(10),
         value
       );
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
-import "./Proxy.sol";
+import {Proxy} from "./Proxy.sol";
 import {IStrategyModule} from "./interfaces/IStrategyModule.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
@@ -17,18 +17,12 @@ contract StrategyModuleFactory is Ownable {
 
     address public immutable basicImplementation;
 
-    mapping(address => bool) public isApproved;
-
-    bytes4 private constant _SM_INTERFACE_ID =
-        type(IStrategyModule).interfaceId;
-
     event StrategyCreation(
         address indexed module,
         address indexed beneficiary,
         address indexed handler,
         uint256 index
     );
-    event StrategyApproved(address indexed module);
 
     error UnsupportedInterface();
 
@@ -38,14 +32,6 @@ contract StrategyModuleFactory is Ownable {
             "implementation cannot be zero"
         );
         basicImplementation = _basicImplementation;
-    }
-
-    function approveModule(address strategyModule) external onlyOwner {
-        if (!strategyModule.supportsInterface(_SM_INTERFACE_ID)) {
-            revert UnsupportedInterface();
-        }
-        isApproved[strategyModule] = true;
-        emit StrategyApproved(strategyModule);
     }
 
     /**
