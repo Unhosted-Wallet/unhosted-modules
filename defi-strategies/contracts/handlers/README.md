@@ -23,8 +23,12 @@ $ npm install @unhosted/handlers  @openzeppelin/contracts
 $ forge install Unhosted-Wallet/unhosted-modules OpenZeppelin/openzeppelin-contracts
 ```
 
-Add `@unhosted/handlers/=lib/unhosted-modules/defi-strategies/contracts/handlers/
-@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/` in `remappings.txt`
+Also add  
+```
+$ @unhosted/handlers/=lib/unhosted-modules/defi-strategies/contracts/handlers/  
+$ @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+```
+to `remappings.txt`
 
 ### Usage
 
