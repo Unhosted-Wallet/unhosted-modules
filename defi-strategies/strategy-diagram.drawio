@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-10-20T15:13:14.492Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/118.0" etag="PqCLiS4PVMqqiTgjpUZN" version="21.8.2" type="github">
+<mxfile host="app.diagrams.net" modified="2023-10-21T19:03:35.959Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/118.0" etag="BuR-b2FnHPngZAkYbX0v" version="22.0.6" type="github">
   <diagram name="Page-1" id="TvMvOZ9mV_910rXKRIYk">
     <mxGraphModel dx="1804" dy="536" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -107,7 +107,7 @@
             <mxPoint x="-22" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="MDHbiPIN4DShXxyYwHcX-20" value="User SA" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
+        <mxCell id="MDHbiPIN4DShXxyYwHcX-20" value="User" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
           <mxGeometry x="-220" y="130" width="50" height="50" as="geometry" />
         </mxCell>
         <mxCell id="MDHbiPIN4DShXxyYwHcX-28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.25;exitDx=0;exitDy=0;" parent="1" source="MDHbiPIN4DShXxyYwHcX-21" target="MDHbiPIN4DShXxyYwHcX-20" edge="1">
@@ -121,7 +121,7 @@
         <mxCell id="MDHbiPIN4DShXxyYwHcX-21" value="Strategy Module" style="whiteSpace=wrap;html=1;rounded=1;" parent="1" vertex="1">
           <mxGeometry x="-270" y="230" width="150" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="-eRPkNMYUyGXU0NjvsWs-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.317;entryY=0.978;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="MDHbiPIN4DShXxyYwHcX-10">
+        <mxCell id="-eRPkNMYUyGXU0NjvsWs-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.317;entryY=0.978;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" target="MDHbiPIN4DShXxyYwHcX-10" edge="1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="-530" y="140" as="sourcePoint" />
             <Array as="points">
@@ -130,7 +130,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="-eRPkNMYUyGXU0NjvsWs-2" value="5d. execution" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="-eRPkNMYUyGXU0NjvsWs-1">
+        <mxCell id="-eRPkNMYUyGXU0NjvsWs-2" value="5d. execution" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="-eRPkNMYUyGXU0NjvsWs-1" vertex="1" connectable="0">
           <mxGeometry x="0.6293" relative="1" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
