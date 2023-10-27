@@ -132,6 +132,28 @@ export const call = async (
   return result;
 };
 
+export const callExecStrategy = async (
+  contract: Contract,
+  params: any[],
+  output: string[],
+  fee: any
+): Promise<any> => {
+  const data = contract.interface.encodeFunctionData("execStrategy", params);
+
+  const txRes = await waffle.provider.call({
+    to: contract.address,
+    data: data,
+    value: fee,
+  });
+
+  const result = ethers.utils.defaultAbiCoder.decode(["bool", "bytes"], txRes);
+  const decodedResult = ethers.utils.defaultAbiCoder.decode(output, result[1]);
+
+  await contract.execStrategy(params[0], params[1], params[2], { value: fee });
+
+  return decodedResult;
+};
+
 export const calculateSafeDomainSeparator = (
   safe: Contract,
   chainId: BigNumberish

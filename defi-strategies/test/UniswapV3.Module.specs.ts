@@ -2,7 +2,11 @@ import { expect } from "chai";
 import { Contract } from "ethers";
 import { decodeError } from "ethers-decode-error";
 import hardhat, { ethers, deployments, waffle } from "hardhat";
-import { buildEcdsaModuleAuthorizedStrategyTx, call } from "./utils/execution";
+import {
+  buildEcdsaModuleAuthorizedStrategyTx,
+  call,
+  callExecStrategy,
+} from "./utils/execution";
 import { makeEcdsaModuleUserOp } from "./utils/userOp";
 import {
   WRAPPED_NATIVE_TOKEN,
@@ -34,8 +38,6 @@ describe("Uniswap V3", async () => {
   let WrappedETH: Contract;
   let token: Contract;
   let token2: Contract;
-  let provider: Contract;
-  let router: Contract;
   let quoter: Contract;
   let providerAddress: any;
   let wethProviderAddress: any;
@@ -74,8 +76,6 @@ describe("Uniswap V3", async () => {
         type: "error",
       },
     ];
-
-    router = await ethers.getContractAt("ISwapRouter", UNISWAPV3_ROUTER);
 
     quoter = await ethers.getContractAt("IQuoter", UNISWAPV3_QUOTER);
 
@@ -203,11 +203,11 @@ describe("Uniswap V3", async () => {
             fee = fee[0];
           }
 
-          await strategyModule.execStrategy(
-            userSA.address,
-            transaction,
-            signature,
-            { value: fee }
+          const execRes = await callExecStrategy(
+            strategyModule,
+            [userSA.address, transaction, signature],
+            ["uint256"],
+            fee
           );
 
           const afterExecBalance = await waffle.provider.getBalance(
@@ -215,6 +215,8 @@ describe("Uniswap V3", async () => {
           );
 
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(await token.balanceOf(userSA.address)).to.be.eq(
             ethers.BigNumber.from(`${res}`)
@@ -274,16 +276,18 @@ describe("Uniswap V3", async () => {
             fee = fee[0];
           }
 
-          await strategyModule.execStrategy(
-            userSA.address,
-            transaction,
-            signature,
-            { value: fee }
+          const execRes = await callExecStrategy(
+            strategyModule,
+            [userSA.address, transaction, signature],
+            ["uint256"],
+            fee
           );
 
           const afterExecBalance = await waffle.provider.getBalance(
             userSA.address
           );
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
             beforeExecBalance
@@ -355,11 +359,11 @@ describe("Uniswap V3", async () => {
             fee = fee[0];
           }
 
-          await strategyModule.execStrategy(
-            userSA.address,
-            transaction,
-            signature,
-            { value: fee }
+          const execRes = await callExecStrategy(
+            strategyModule,
+            [userSA.address, transaction, signature],
+            ["uint256"],
+            fee
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -367,6 +371,8 @@ describe("Uniswap V3", async () => {
           const ethAfterExecBalance = await waffle.provider.getBalance(
             userSA.address
           );
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
 
@@ -434,11 +440,11 @@ describe("Uniswap V3", async () => {
             fee = fee[0];
           }
 
-          await strategyModule.execStrategy(
-            userSA.address,
-            transaction,
-            signature,
-            { value: fee }
+          const execRes = await callExecStrategy(
+            strategyModule,
+            [userSA.address, transaction, signature],
+            ["uint256"],
+            fee
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -446,6 +452,8 @@ describe("Uniswap V3", async () => {
           const ethAfterExecBalance = await waffle.provider.getBalance(
             userSA.address
           );
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
             beforeExecBalance
@@ -524,11 +532,11 @@ describe("Uniswap V3", async () => {
             fee = fee[0];
           }
 
-          await strategyModule.execStrategy(
-            userSA.address,
-            transaction,
-            signature,
-            { value: fee }
+          const execRes = await callExecStrategy(
+            strategyModule,
+            [userSA.address, transaction, signature],
+            ["uint256"],
+            fee
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -536,6 +544,8 @@ describe("Uniswap V3", async () => {
           const wethAfterExecBalance = await WrappedETH.balanceOf(
             userSA.address
           );
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
 
@@ -610,11 +620,11 @@ describe("Uniswap V3", async () => {
             fee = fee[0];
           }
 
-          await strategyModule.execStrategy(
-            userSA.address,
-            transaction,
-            signature,
-            { value: fee }
+          const execRes = await callExecStrategy(
+            strategyModule,
+            [userSA.address, transaction, signature],
+            ["uint256"],
+            fee
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -626,6 +636,8 @@ describe("Uniswap V3", async () => {
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
             beforeExecBalance
           );
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(wethAfterExecBalance.sub(wethBeforeExecBalance)).to.be.eq(
             ethers.BigNumber.from(`${res}`)
@@ -691,16 +703,18 @@ describe("Uniswap V3", async () => {
             fee = fee[0];
           }
 
-          await strategyModule.execStrategy(
-            userSA.address,
-            transaction,
-            signature,
-            { value: fee }
+          const execRes = await callExecStrategy(
+            strategyModule,
+            [userSA.address, transaction, signature],
+            ["uint256"],
+            fee
           );
 
           const afterExecBalance = await waffle.provider.getBalance(
             userSA.address
           );
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
 
@@ -764,16 +778,18 @@ describe("Uniswap V3", async () => {
             fee = fee[0];
           }
 
-          await strategyModule.execStrategy(
-            userSA.address,
-            transaction,
-            signature,
-            { value: fee }
+          const execRes = await callExecStrategy(
+            strategyModule,
+            [userSA.address, transaction, signature],
+            ["uint256"],
+            fee
           );
 
           const afterExecBalance = await waffle.provider.getBalance(
             userSA.address
           );
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
 
@@ -845,11 +861,11 @@ describe("Uniswap V3", async () => {
             fee = fee[0];
           }
 
-          await strategyModule.execStrategy(
-            userSA.address,
-            transaction,
-            signature,
-            { value: fee }
+          const execRes = await callExecStrategy(
+            strategyModule,
+            [userSA.address, transaction, signature],
+            ["uint256"],
+            fee
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -857,6 +873,8 @@ describe("Uniswap V3", async () => {
           const ethAfterExecBalance = await waffle.provider.getBalance(
             userSA.address
           );
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
 
@@ -926,11 +944,11 @@ describe("Uniswap V3", async () => {
             fee = fee[0];
           }
 
-          await strategyModule.execStrategy(
-            userSA.address,
-            transaction,
-            signature,
-            { value: fee }
+          const execRes = await callExecStrategy(
+            strategyModule,
+            [userSA.address, transaction, signature],
+            ["uint256"],
+            fee
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -938,6 +956,8 @@ describe("Uniswap V3", async () => {
           const ethAfterExecBalance = await waffle.provider.getBalance(
             userSA.address
           );
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
             beforeExecBalance
@@ -1012,11 +1032,11 @@ describe("Uniswap V3", async () => {
             fee = fee[0];
           }
 
-          await strategyModule.execStrategy(
-            userSA.address,
-            transaction,
-            signature,
-            { value: fee }
+          const execRes = await callExecStrategy(
+            strategyModule,
+            [userSA.address, transaction, signature],
+            ["uint256"],
+            fee
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -1024,6 +1044,8 @@ describe("Uniswap V3", async () => {
           const wethAfterExecBalance = await WrappedETH.balanceOf(
             userSA.address
           );
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
 
@@ -1094,11 +1116,11 @@ describe("Uniswap V3", async () => {
             fee = fee[0];
           }
 
-          await strategyModule.execStrategy(
-            userSA.address,
-            transaction,
-            signature,
-            { value: fee }
+          const execRes = await callExecStrategy(
+            strategyModule,
+            [userSA.address, transaction, signature],
+            ["uint256"],
+            fee
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -1106,6 +1128,8 @@ describe("Uniswap V3", async () => {
           const wethAfterExecBalance = await WrappedETH.balanceOf(
             userSA.address
           );
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
             beforeExecBalance
@@ -1174,16 +1198,18 @@ describe("Uniswap V3", async () => {
               fee = fee[0];
             }
 
-            await strategyModule.execStrategy(
-              userSA.address,
-              transaction,
-              signature,
-              { value: fee }
+            const execRes = await callExecStrategy(
+              strategyModule,
+              [userSA.address, transaction, signature],
+              ["uint256"],
+              fee
             );
 
             const afterExecBalance = await waffle.provider.getBalance(
               userSA.address
             );
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
               ethers.BigNumber.from(`${res}`)
@@ -1247,16 +1273,18 @@ describe("Uniswap V3", async () => {
               fee = fee[0];
             }
 
-            await strategyModule.execStrategy(
-              userSA.address,
-              transaction,
-              signature,
-              { value: fee }
+            const execRes = await callExecStrategy(
+              strategyModule,
+              [userSA.address, transaction, signature],
+              ["uint256"],
+              fee
             );
 
             const afterExecBalance = await waffle.provider.getBalance(
               userSA.address
             );
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
               ethers.BigNumber.from(`${res}`)
@@ -1328,11 +1356,11 @@ describe("Uniswap V3", async () => {
               fee = fee[0];
             }
 
-            await strategyModule.execStrategy(
-              userSA.address,
-              transaction,
-              signature,
-              { value: fee }
+            const execRes = await callExecStrategy(
+              strategyModule,
+              [userSA.address, transaction, signature],
+              ["uint256"],
+              fee
             );
 
             const ethAfterExecBalance = await waffle.provider.getBalance(
@@ -1340,6 +1368,8 @@ describe("Uniswap V3", async () => {
             );
 
             const afterExecBalance = await token.balanceOf(userSA.address);
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
               ethers.BigNumber.from(`${res}`)
@@ -1409,11 +1439,11 @@ describe("Uniswap V3", async () => {
               fee = fee[0];
             }
 
-            await strategyModule.execStrategy(
-              userSA.address,
-              transaction,
-              signature,
-              { value: fee }
+            const execRes = await callExecStrategy(
+              strategyModule,
+              [userSA.address, transaction, signature],
+              ["uint256"],
+              fee
             );
 
             const ethAfterExecBalance = await waffle.provider.getBalance(
@@ -1421,6 +1451,8 @@ describe("Uniswap V3", async () => {
             );
 
             const afterExecBalance = await token.balanceOf(userSA.address);
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
               ethers.BigNumber.from(`${res}`)
@@ -1499,11 +1531,11 @@ describe("Uniswap V3", async () => {
               fee = fee[0];
             }
 
-            await strategyModule.execStrategy(
-              userSA.address,
-              transaction,
-              signature,
-              { value: fee }
+            const execRes = await callExecStrategy(
+              strategyModule,
+              [userSA.address, transaction, signature],
+              ["uint256"],
+              fee
             );
 
             const wethAfterExecBalance = await WrappedETH.balanceOf(
@@ -1511,6 +1543,8 @@ describe("Uniswap V3", async () => {
             );
 
             const afterExecBalance = await token.balanceOf(userSA.address);
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
               ethers.BigNumber.from(`${res}`)
@@ -1587,11 +1621,11 @@ describe("Uniswap V3", async () => {
               fee = fee[0];
             }
 
-            await strategyModule.execStrategy(
-              userSA.address,
-              transaction,
-              signature,
-              { value: fee }
+            const execRes = await callExecStrategy(
+              strategyModule,
+              [userSA.address, transaction, signature],
+              ["uint256"],
+              fee
             );
 
             const wethAfterExecBalance = await WrappedETH.balanceOf(
@@ -1599,6 +1633,8 @@ describe("Uniswap V3", async () => {
             );
 
             const afterExecBalance = await token.balanceOf(userSA.address);
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
               ethers.BigNumber.from(`${res}`)
@@ -1667,11 +1703,11 @@ describe("Uniswap V3", async () => {
               fee = fee[0];
             }
 
-            await strategyModule.execStrategy(
-              userSA.address,
-              transaction,
-              signature,
-              { value: fee }
+            const execRes = await callExecStrategy(
+              strategyModule,
+              [userSA.address, transaction, signature],
+              ["uint256"],
+              fee
             );
 
             const afterExecBalance = await waffle.provider.getBalance(
@@ -1681,6 +1717,8 @@ describe("Uniswap V3", async () => {
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
               ethers.BigNumber.from(`${res}`)
             );
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(await token.balanceOf(userSA.address)).to.be.eq(amountOut);
 
@@ -1740,16 +1778,18 @@ describe("Uniswap V3", async () => {
               fee = fee[0];
             }
 
-            await strategyModule.execStrategy(
-              userSA.address,
-              transaction,
-              signature,
-              { value: fee }
+            const execRes = await callExecStrategy(
+              strategyModule,
+              [userSA.address, transaction, signature],
+              ["uint256"],
+              fee
             );
 
             const afterExecBalance = await waffle.provider.getBalance(
               userSA.address
             );
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
               ethers.BigNumber.from(`${res}`)
@@ -1821,11 +1861,11 @@ describe("Uniswap V3", async () => {
               fee = fee[0];
             }
 
-            await strategyModule.execStrategy(
-              userSA.address,
-              transaction,
-              signature,
-              { value: fee }
+            const execRes = await callExecStrategy(
+              strategyModule,
+              [userSA.address, transaction, signature],
+              ["uint256"],
+              fee
             );
 
             const afterExecBalance = await token.balanceOf(userSA.address);
@@ -1833,6 +1873,8 @@ describe("Uniswap V3", async () => {
             const ethAfterExecBalance = await waffle.provider.getBalance(
               userSA.address
             );
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
               ethers.BigNumber.from(`${res}`)
@@ -1904,11 +1946,11 @@ describe("Uniswap V3", async () => {
               fee = fee[0];
             }
 
-            await strategyModule.execStrategy(
-              userSA.address,
-              transaction,
-              signature,
-              { value: fee }
+            const execRes = await callExecStrategy(
+              strategyModule,
+              [userSA.address, transaction, signature],
+              ["uint256"],
+              fee
             );
 
             const afterExecBalance = await token.balanceOf(userSA.address);
@@ -1916,6 +1958,8 @@ describe("Uniswap V3", async () => {
             const ethAfterExecBalance = await waffle.provider.getBalance(
               userSA.address
             );
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
               ethers.BigNumber.from(`${res}`)
@@ -1989,11 +2033,11 @@ describe("Uniswap V3", async () => {
               fee = fee[0];
             }
 
-            await strategyModule.execStrategy(
-              userSA.address,
-              transaction,
-              signature,
-              { value: fee }
+            const execRes = await callExecStrategy(
+              strategyModule,
+              [userSA.address, transaction, signature],
+              ["uint256"],
+              fee
             );
 
             const afterExecBalance = await token.balanceOf(userSA.address);
@@ -2001,6 +2045,8 @@ describe("Uniswap V3", async () => {
             const wethAfterExecBalance = await WrappedETH.balanceOf(
               userSA.address
             );
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
               ethers.BigNumber.from(`${res}`)
@@ -2072,11 +2118,11 @@ describe("Uniswap V3", async () => {
               fee = fee[0];
             }
 
-            await strategyModule.execStrategy(
-              userSA.address,
-              transaction,
-              signature,
-              { value: fee }
+            const execRes = await callExecStrategy(
+              strategyModule,
+              [userSA.address, transaction, signature],
+              ["uint256"],
+              fee
             );
 
             const afterExecBalance = await token.balanceOf(userSA.address);
@@ -2084,6 +2130,8 @@ describe("Uniswap V3", async () => {
             const wethAfterExecBalance = await WrappedETH.balanceOf(
               userSA.address
             );
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
               ethers.BigNumber.from(`${res}`)

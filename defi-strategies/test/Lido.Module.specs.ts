@@ -2,7 +2,10 @@ import { expect } from "chai";
 import { Contract } from "ethers";
 import { decodeError } from "ethers-decode-error";
 import hardhat, { ethers, deployments, waffle } from "hardhat";
-import { buildEcdsaModuleAuthorizedStrategyTx } from "./utils/execution";
+import {
+  buildEcdsaModuleAuthorizedStrategyTx,
+  callExecStrategy,
+} from "./utils/execution";
 import { makeEcdsaModuleUserOp } from "./utils/userOp";
 import { LIDO_PROXY, LIDO_REFERRAL_ADDRESS } from "./utils/constants_eth";
 import { MAX_UINT256 } from "./utils/constants";
@@ -123,7 +126,7 @@ describe("Lido Finance", async () => {
           smartAccountOwner,
           ecdsaModule.address,
           strategyModule,
-          value
+          value.toString()
         );
 
       const beforeExecBalance = await stETH.balanceOf(userSA.address);
@@ -135,14 +138,16 @@ describe("Lido Finance", async () => {
         fee = fee[0];
       }
 
-      await strategyModule.execStrategy(
-        userSA.address,
-        transaction,
-        signature,
-        { value: fee }
+      const execRes = await callExecStrategy(
+        strategyModule,
+        [userSA.address, transaction, signature],
+        ["uint256"],
+        fee
       );
 
       const afterExecBalance = await stETH.balanceOf(userSA.address);
+
+      expect(afterExecBalance.sub(beforeExecBalance)).to.be.eq(execRes[0]);
 
       expect(afterExecBalance.sub(beforeExecBalance)).to.be.within(
         value.sub(10),
@@ -173,7 +178,7 @@ describe("Lido Finance", async () => {
           smartAccountOwner,
           ecdsaModule.address,
           strategyModule,
-          value
+          value.toString()
         );
 
       const beforeExecBalance = await stETH.balanceOf(userSA.address);
@@ -185,14 +190,16 @@ describe("Lido Finance", async () => {
         fee = fee[0];
       }
 
-      await strategyModule.execStrategy(
-        userSA.address,
-        transaction,
-        signature,
-        { value: fee }
+      const execRes = await callExecStrategy(
+        strategyModule,
+        [userSA.address, transaction, signature],
+        ["uint256"],
+        fee
       );
 
       const afterExecBalance = await stETH.balanceOf(userSA.address);
+
+      expect(afterExecBalance.sub(beforeExecBalance)).to.be.eq(execRes[0]);
 
       expect(afterExecBalance.sub(beforeExecBalance)).to.be.within(
         value.sub(10),

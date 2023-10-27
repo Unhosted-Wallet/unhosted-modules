@@ -1,5 +1,6 @@
 import { DeployFunction } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { CHAINLINK_GAS_PRICE_FEED } from "../../test/utils/constants_eth";
 
 const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts } = hre;
@@ -8,7 +9,7 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   await deploy("StrategyModule", {
     from: deployer,
-    args: [],
+    args: [CHAINLINK_GAS_PRICE_FEED],
     log: true,
     deterministicDeployment: true,
     autoMine: true,
