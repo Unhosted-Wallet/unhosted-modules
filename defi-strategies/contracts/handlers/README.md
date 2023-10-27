@@ -2,6 +2,8 @@
 
 ![npm](https://img.shields.io/npm/v/%40unhosted%2Fhandlers?style=for-the-badge)
 ![NPM](https://img.shields.io/npm/l/%40unhosted%2Fhandlers?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/framework-hardhat-yellow?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/Solidity-0.8.20-orange?style=for-the-badge)
 
 # Defi Strategy Handlers
 

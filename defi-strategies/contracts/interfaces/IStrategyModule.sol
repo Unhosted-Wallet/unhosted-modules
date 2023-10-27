@@ -18,6 +18,13 @@ interface IExecFromModule {
         bytes memory data,
         Enum.Operation operation
     ) external returns (bool success);
+
+    function execTransactionFromModuleReturnData(
+        address to,
+        uint256 value,
+        bytes memory data,
+        Enum.Operation operation
+    ) external returns (bool success, bytes memory returnData);
 }
 
 interface IStrategyModule {
@@ -42,7 +49,7 @@ interface IStrategyModule {
         address strategyModule,
         StrategyTransaction memory _tx,
         bytes memory signatures
-    ) external payable returns (bool);
+    ) external payable returns (bool success, bytes memory returnData);
 
     function getTransactionHash(
         StrategyTransaction calldata _tx,
