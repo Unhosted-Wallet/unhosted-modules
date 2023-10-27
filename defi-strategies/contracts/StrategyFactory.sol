@@ -4,7 +4,6 @@ pragma solidity 0.8.20;
 import {Proxy} from "./Proxy.sol";
 import {IStrategyModule} from "./interfaces/IStrategyModule.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 /**
  * @title Strategy Module Factory - factory responsible for deploying Strategy Modules using CREATE2
@@ -13,8 +12,6 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
  * @author M. Zakeri Rad - <@zakrad>
  */
 contract StrategyModuleFactory is Ownable {
-    using ERC165Checker for address;
-
     address public immutable basicImplementation;
 
     event StrategyCreation(
@@ -23,8 +20,6 @@ contract StrategyModuleFactory is Ownable {
         address indexed handler,
         uint256 index
     );
-
-    error UnsupportedInterface();
 
     constructor(address _basicImplementation) {
         require(
