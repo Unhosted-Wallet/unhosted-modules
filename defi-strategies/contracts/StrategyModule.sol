@@ -33,13 +33,11 @@ contract StrategyModule is
         0x06d4deb91a5dc73a3ea344ed05631460315e2109778b250fdd941893ee92bec8;
 
     // solhint-disable-next-line
-    address internal constant _gasFeed =
-        0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C;
-
-    // solhint-disable-next-line
     uint16 internal constant _feeFactor = 5000; // 50%
 
     uint256 private immutable CHAIN_ID;
+    // solhint-disable-next-line
+    address internal immutable _gasFeed;
 
     mapping(address => uint256) public nonces;
 
@@ -53,8 +51,9 @@ contract StrategyModule is
     error AddressCanNotBeZero();
     error RevertEstimation(uint256);
 
-    constructor() {
+    constructor(address gasFeed_) {
         CHAIN_ID = block.chainid;
+        _gasFeed = gasFeed_;
     }
 
     function init(
@@ -78,7 +77,13 @@ contract StrategyModule is
         address smartAccount,
         StrategyTransaction memory _tx,
         bytes memory signatures
-    ) public payable virtual nonReentrant returns (bool success) {
+    )
+        public
+        payable
+        virtual
+        nonReentrant
+        returns (bool success, bytes memory returnData)
+    {
         bytes32 txHash;
 
         {
@@ -101,13 +106,13 @@ contract StrategyModule is
 
         {
             uint256 startGas = gasleft();
-            success = IExecFromModule(smartAccount).execTransactionFromModule(
-                handler,
-                _tx.value,
-                _tx.data,
-                Enum.Operation.DelegateCall,
-                _tx.gas
-            );
+            (success, returnData) = IExecFromModule(smartAccount)
+                .execTransactionFromModuleReturnData(
+                    handler,
+                    _tx.value,
+                    _tx.data,
+                    Enum.Operation.DelegateCall
+                );
             uint256 used = (startGas - gasleft());
 
             (, int256 answer, , , ) = AggregatorV3Interface(_gasFeed)
@@ -130,12 +135,11 @@ contract StrategyModule is
     ) public {
         uint256 startGas = gasleft();
 
-        IExecFromModule(strategyModule).execTransactionFromModule(
+        IExecFromModule(strategyModule).execTransactionFromModuleReturnData(
             handler,
             _tx.value,
             _tx.data,
-            Enum.Operation.DelegateCall,
-            _tx.gas
+            Enum.Operation.DelegateCall
         );
         uint256 used = (startGas - gasleft());
 
