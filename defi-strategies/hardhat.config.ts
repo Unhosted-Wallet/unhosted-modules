@@ -79,6 +79,24 @@ const config: HardhatUserConfig = {
             chainId: 31337,
           }),
     },
+    mumbai: {
+      url: `${process.env.TESTNET_ARCHIVAL_RPC}`,
+      accounts: [
+        `${
+          process.env.TESTNET_PRIVATE_KEY ||
+          "0x0000000000000000000000000000000000000000000000000000000000000000"
+        }`,
+      ],
+    },
+    goerli: {
+      url: `${process.env.GOERLI_ARCHIVAL_RPC}`,
+      accounts: [
+        `${
+          process.env.TESTNET_PRIVATE_KEY ||
+          "0x0000000000000000000000000000000000000000000000000000000000000000"
+        }`,
+      ],
+    },
     hardhat_node: {
       live: false,
       saveDeployments: false,
@@ -111,6 +129,11 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY || "",
+      goerli: process.env.ETHERSCAN_API_KEY || "",
+      bsc: process.env.BSC_API_KEY || "",
+      bscTestnet: process.env.BSC_TESTNET_API_KEY || "",
+      polygon: process.env.POLYGON_API_KEY || "",
+      polygonMumbai: process.env.POLYGON_API_KEY || "",
     },
   },
 };
