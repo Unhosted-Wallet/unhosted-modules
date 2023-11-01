@@ -4,11 +4,11 @@
 pragma solidity 0.8.20;
 
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {BaseHandler} from "../BaseHandler.sol";
-import {IWrappedNativeToken} from "../wrappednativetoken/IWrappedNativeToken.sol";
-import {ISwapRouter} from "./ISwapRouter.sol";
-import {IUniswapV3Handler} from "./IUniswapV3H.sol";
-import {BytesLib} from "./libraries/BytesLib.sol";
+import {BaseHandler} from "contracts/handlers/BaseHandler.sol";
+import {IWrappedNativeToken} from "contracts/handlers/wrappednativetoken/IWrappedNativeToken.sol";
+import {ISwapRouter} from "contracts/handlers/uniswapV3/ISwapRouter.sol";
+import {IUniswapV3Handler} from "contracts/handlers/uniswapV3/IUniswapV3H.sol";
+import {BytesLib} from "contracts/handlers/uniswapV3/libraries/BytesLib.sol";
 
 contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
     using SafeERC20 for IERC20;
