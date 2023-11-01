@@ -3,12 +3,12 @@
 pragma solidity 0.8.20;
 
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ILendingPoolV2} from "./ILendingPoolV2.sol";
+import {ILendingPoolV2} from "contracts/handlers/aaveV2/ILendingPoolV2.sol";
 import {ILendingPoolAddressesProviderV2} from "./ILendingPoolAddressesProviderV2.sol";
-import {DataTypes} from "./libraries/DataTypes.sol";
-import {IWrappedNativeToken} from "../wrappednativetoken/IWrappedNativeToken.sol";
-import {BaseHandler} from "../BaseHandler.sol";
-import {IAaveV2Handler} from "./IAaveV2H.sol";
+import {DataTypes} from "contracts/handlers/aaveV2/libraries/DataTypes.sol";
+import {IWrappedNativeToken} from "contracts/handlers/wrappednativetoken/IWrappedNativeToken.sol";
+import {BaseHandler} from "contracts/handlers/BaseHandler.sol";
+import {IAaveV2Handler} from "contracts/handlers/aaveV2/IAaveV2H.sol";
 
 contract AaveV2Handler is BaseHandler, IAaveV2Handler {
     using SafeERC20 for IERC20;

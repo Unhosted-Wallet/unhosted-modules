@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 /* solhint-disable no-empty-blocks */
-import {IFlashLoanReceiver} from "./IFlashLoanReceiver.sol";
+import {IFlashLoanReceiver} from "contracts/handlers/aaveV2/IFlashLoanReceiver.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**

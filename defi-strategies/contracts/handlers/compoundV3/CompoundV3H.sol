@@ -3,10 +3,10 @@
 
 pragma solidity 0.8.20;
 
-import {BaseHandler, IERC20} from "../BaseHandler.sol";
-import {IWrappedNativeToken} from "../wrappednativetoken/IWrappedNativeToken.sol";
-import {IComet} from "./IComet.sol";
-import {ICompoundV3Handler} from "./ICompoundV3H.sol";
+import {BaseHandler, IERC20} from "contracts/handlers/BaseHandler.sol";
+import {IWrappedNativeToken} from "contracts/handlers/wrappednativetoken/IWrappedNativeToken.sol";
+import {IComet} from "contracts/handlers/compoundV3/IComet.sol";
+import {ICompoundV3Handler} from "contracts/handlers/compoundV3/ICompoundV3H.sol";
 
 contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
     IWrappedNativeToken public immutable wrappedNativeTokenCompV3;

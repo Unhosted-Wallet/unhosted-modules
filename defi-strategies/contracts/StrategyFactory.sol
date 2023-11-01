@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {Proxy} from "./Proxy.sol";
-import {IStrategyModule} from "./interfaces/IStrategyModule.sol";
+import {Proxy} from "contracts/Proxy.sol";
+import {IStrategyModuleFactory} from "contracts/interfaces/IStrategyFactory.sol";
+import {IStrategyModule} from "contracts/interfaces/IStrategyModule.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
@@ -11,15 +12,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * This allows keeping the same address for the same Strategy Module owner on various chains via CREATE2
  * @author M. Zakeri Rad - <@zakrad>
  */
-contract StrategyModuleFactory is Ownable {
+contract StrategyModuleFactory is Ownable, IStrategyModuleFactory {
     address public immutable basicImplementation;
-
-    event StrategyCreation(
-        address indexed module,
-        address indexed beneficiary,
-        address indexed handler,
-        uint256 index
-    );
 
     constructor(address _basicImplementation) {
         require(
@@ -30,8 +24,7 @@ contract StrategyModuleFactory is Ownable {
     }
 
     /**
-     * @notice Allows to find out strategy module address prior to deployment
-     * @param index extra salt that allows to deploy more module if needed for same EOA (default 0)
+     * @dev See {IStrategyModuleFactory-getAddressForStrategyModule}.
      */
     function getAddressForStrategyModule(
         address beneficiary,
@@ -54,9 +47,7 @@ contract StrategyModuleFactory is Ownable {
     }
 
     /**
-     * @notice Deploys module using create2 and points it to basicImplementation
-     *
-     * @param index extra salt that allows to deploy more module if needed for same EOA (default 0)
+     * @dev See {IStrategyModuleFactory-deployStrategyModule}.
      */
     function deployStrategyModule(
         address beneficiary,
@@ -84,30 +75,27 @@ contract StrategyModuleFactory is Ownable {
         }
         require(address(proxy) != address(0), "Create2 call failed");
 
-        if (initializer.length > 0) {
-            assembly {
-                let success := call(
-                    gas(),
-                    proxy,
-                    0,
-                    add(initializer, 0x20),
-                    mload(initializer),
-                    0,
-                    0
-                )
-                let ptr := mload(0x40)
-                returndatacopy(ptr, 0, returndatasize())
-                if iszero(success) {
-                    revert(ptr, returndatasize())
-                }
+        assembly {
+            let success := call(
+                gas(),
+                proxy,
+                0,
+                add(initializer, 0x20),
+                mload(initializer),
+                0,
+                0
+            )
+            let ptr := mload(0x40)
+            returndatacopy(ptr, 0, returndatasize())
+            if iszero(success) {
+                revert(ptr, returndatasize())
             }
         }
         emit StrategyCreation(proxy, beneficiary, handler, index);
     }
 
     /**
-     * @dev Allows to retrieve the creation code used for the Proxy deployment.
-     * @return The creation code for the Proxy.
+     * @dev See {IStrategyModuleFactory-moduleCreationCode}.
      */
     function moduleCreationCode() public pure returns (bytes memory) {
         return type(Proxy).creationCode;

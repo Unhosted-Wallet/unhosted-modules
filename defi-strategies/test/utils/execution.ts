@@ -147,6 +147,7 @@ export const callExecStrategy = async (
   });
 
   const result = ethers.utils.defaultAbiCoder.decode(["bool", "bytes"], txRes);
+
   const decodedResult = ethers.utils.defaultAbiCoder.decode(output, result[1]);
 
   await contract.execStrategy(params[0], params[1], params[2], { value: fee });

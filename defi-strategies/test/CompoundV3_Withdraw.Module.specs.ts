@@ -41,8 +41,6 @@ describe("Compound V3 withdraw", async () => {
   let cbETH: Contract;
   let dai: Contract;
   let usdc: Contract;
-  let provider: Contract;
-  let lendingPool: Contract;
   let providerAddress: any;
   let wethProviderAddress: any;
   let fee: any;

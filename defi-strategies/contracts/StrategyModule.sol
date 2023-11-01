@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {ISignatureValidator, ISignatureValidatorConstants} from "./interfaces/ISignatureValidator.sol";
-import {Enum} from "./common/Enum.sol";
-import {ReentrancyGuard} from "./common/ReentrancyGuard.sol";
+import {ISignatureValidator, ISignatureValidatorConstants} from "contracts/interfaces/ISignatureValidator.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {IExecFromModule, IStrategyModule} from "./interfaces/IStrategyModule.sol";
+import {IExecFromModule, IStrategyModule, Enum} from "contracts/interfaces/IStrategyModule.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 /**
- * @title Defi Base Strategy module for Biconomy Smart Accounts.
+ * @title Strategy module for Biconomy Smart Accounts.
  * @dev Compatible with Biconomy Modular Interface v 0.1
- * - It allows to delegate call to external defi strategy contracts and execute arbitrary data.
+ * - It allows to delegate call to external handler contracts and execute arbitrary data.
  * - EIP-1271 compatible (checks if the signer is the owner).
  * @author M. Zakeri Rad - <@zakrad>
  */
@@ -70,8 +69,7 @@ contract StrategyModule is
     }
 
     /**
-     * it can call any arbitrary logic from handler without any confirmation if the
-     * module is enabled and SA owner signed the data
+     * @dev See {IStrategyModule-execStrategy}.
      */
     function execStrategy(
         address smartAccount,
@@ -125,17 +123,15 @@ contract StrategyModule is
     }
 
     /**
-     * @dev Allows to estimate a transaction.
-     * This method is for estimation only, it will always revert and encode the result in the revert data.
-     * Call this method to get an estimate of the execTransactionFromModule costs that are deducted with `execStrategy`
+     * @dev See {IStrategyModule-requiredTxFee}.
      */
     function requiredTxFee(
-        address strategyModule,
+        address smartAccount,
         StrategyTransaction memory _tx
     ) public {
         uint256 startGas = gasleft();
 
-        IExecFromModule(strategyModule).execTransactionFromModuleReturnData(
+        IExecFromModule(smartAccount).execTransactionFromModuleReturnData(
             handler,
             _tx.value,
             _tx.data,
@@ -151,10 +147,7 @@ contract StrategyModule is
     }
 
     /**
-     * @dev Returns hash to be signed by owner.
-     * @param _nonce Transaction nonce.
-     * @param smartAccount Address of the Smart Account to execute the txn.
-     * @return Transaction hash.
+     * @dev See {IStrategyModule-getTransactionHash}.
      */
     function getTransactionHash(
         StrategyTransaction calldata _tx,
@@ -165,11 +158,7 @@ contract StrategyModule is
     }
 
     /**
-     * @dev Returns the bytes that are hashed to be signed by owner.
-     * @param smartAccount Address of the Smart Account to execute the txn.
-     * @param _tx The strategy transaction data to be signed.
-     * @param _nonce Transaction nonce.
-     * @return strategyHash bytes that are hashed to be signed by the owner.
+     * @dev See {IStrategyModule-encodeStrategyData}.
      */
     function encodeStrategyData(
         address smartAccount,
@@ -195,9 +184,7 @@ contract StrategyModule is
     }
 
     /**
-     * @dev returns a value from the nonces 2d mapping
-     * @param smartAccount address of smart account to get nonce
-     * @return nonce : the number of transactions made by smart account
+     * @dev See {IStrategyModule-getNonce}.
      */
     function getNonce(
         address smartAccount
@@ -206,9 +193,7 @@ contract StrategyModule is
     }
 
     /**
-     * @dev Returns the domain separator for this contract, as defined in the EIP-712 standard.
-     * @param smartAccount Address of the Smart Account as verifying contract address
-     * @return bytes32 The domain separator hash.
+     * @dev See {IStrategyModule-domainSeparator}.
      */
     function domainSeparator(
         address smartAccount
@@ -220,8 +205,7 @@ contract StrategyModule is
     }
 
     /**
-     * @notice Returns the ID of the chain the contract is currently deployed on.
-     * @return CHAIN_ID The ID of the current chain as a uint256.
+     * @dev See {IStrategyModule-getChainId}.
      */
     function getChainId() public view returns (uint256) {
         return CHAIN_ID;
