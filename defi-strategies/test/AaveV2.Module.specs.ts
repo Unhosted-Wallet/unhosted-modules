@@ -24,7 +24,7 @@ import {
 } from "./utils/setupHelper";
 import { getTokenProvider } from "./utils/providers";
 
-describe("AaveV2 deposit & withdraw", async () => {
+describe("AaveV2 Deposit & Withdraw", async () => {
   const chainId = hardhat.network.config.chainId;
   if (chainId === 1 || chainId === 137) {
     // This test supports to run on these chains.
