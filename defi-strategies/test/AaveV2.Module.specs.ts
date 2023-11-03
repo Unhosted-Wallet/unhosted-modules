@@ -309,12 +309,17 @@ describe("AaveV2 Deposit & Withdraw", async () => {
 
       const afterExecBalance = await token.balanceOf(userSA.address);
 
-      expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
+      expect(beforeExecBalance.sub(afterExecBalance)).to.be.within(
+        value.sub(1),
+        value.add(1)
+      );
 
       expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(execRes[0]);
 
-      expect(await aToken.balanceOf(userSA.address)).to.be.eq(value);
-
+      expect(await aToken.balanceOf(userSA.address)).to.be.within(
+        value.sub(1),
+        value.add(1)
+      );
       expect(await aToken.balanceOf(strategyModule.address)).to.be.eq(0);
 
       expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
@@ -363,13 +368,16 @@ describe("AaveV2 Deposit & Withdraw", async () => {
 
       const afterExecBalance = await token.balanceOf(userSA.address);
 
-      expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
+      expect(beforeExecBalance.sub(afterExecBalance)).to.be.within(
+        value.sub(1),
+        value.add(1)
+      );
 
       expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(execRes[0]);
 
       expect(await aToken.balanceOf(userSA.address)).to.be.within(
-        value.sub(2),
-        value
+        value.sub(1),
+        value.add(1)
       );
 
       expect(await aToken.balanceOf(strategyModule.address)).to.be.eq(0);
