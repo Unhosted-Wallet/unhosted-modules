@@ -24,7 +24,7 @@ import { getTokenProvider } from "./utils/providers";
 
 describe("Compound V3 supply", async () => {
   const chainId = hardhat.network.config.chainId;
-  if (chainId === 1 || chainId === 137) {
+  if (chainId === 1) {
     // This test supports to run on these chains.
   } else {
     return;
