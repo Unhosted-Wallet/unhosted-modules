@@ -254,9 +254,15 @@ describe("AaveV2 flashloan", async () => {
 
       const afterExecBalance = await WrappedETH.balanceOf(userSA.address);
 
-      expect(afterExecBalance.sub(beforeExecBalance)).to.be.within(value.sub(1), value.add(1));
+      expect(afterExecBalance.sub(beforeExecBalance)).to.be.within(
+        value.sub(1),
+        value.add(1)
+      );
 
-      expect(await variableDebtWETH.balanceOf(userSA.address)).to.be.within(value.sub(1), value.add(1));
+      expect(await variableDebtWETH.balanceOf(userSA.address)).to.be.within(
+        value.sub(1),
+        value.add(1)
+      );
 
       expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
     });
