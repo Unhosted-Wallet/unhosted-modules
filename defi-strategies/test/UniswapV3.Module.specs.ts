@@ -10,7 +10,6 @@ import {
 import { makeEcdsaModuleUserOp } from "./utils/userOp";
 import {
   WRAPPED_NATIVE_TOKEN,
-  UNISWAPV3_ROUTER,
   UNISWAPV3_QUOTER,
   DAI_TOKEN,
   USDT_TOKEN,

@@ -2,16 +2,12 @@ import { expect } from "chai";
 import { Contract } from "ethers";
 import { decodeError } from "ethers-decode-error";
 import hardhat, { ethers, deployments, waffle } from "hardhat";
-import {
-  buildEcdsaModuleAuthorizedStrategyTx,
-  callExecStrategy,
-} from "./utils/execution";
+import { buildEcdsaModuleAuthorizedStrategyTx } from "./utils/execution";
 import { makeEcdsaModuleUserOp } from "./utils/userOp";
 import {
   USDT_TOKEN,
   AUSDT_V2_DEBT_STABLE,
   AUSDT_V2_DEBT_VARIABLE,
-  COMP_TOKEN,
   AWRAPPED_NATIVE_V2_DEBT_STABLE,
   AWRAPPED_NATIVE_V2_DEBT_VARIABLE,
   AAVE_RATEMODE,
@@ -21,7 +17,6 @@ import {
   DAI_TOKEN,
   ADAI_V2,
 } from "./utils/constants_eth";
-import { MAX_UINT256 } from "./utils/constants";
 
 import {
   getEntryPoint,
@@ -43,11 +38,9 @@ describe("AaveV2 Borrow", async () => {
   let aaveV2handler: Contract;
   let WrappedETH: Contract;
   let debtWrappedETH: Contract;
-  let AWrappedETH: Contract;
   let token: Contract;
   let debtToken: Contract;
   let borrowToken: Contract;
-  let aToken: Contract;
   let provider: Contract;
   let lendingPool: Contract;
   let providerAddress: any;
@@ -85,17 +78,9 @@ describe("AaveV2 Borrow", async () => {
       await ethers.getContractFactory("MockToken")
     ).attach(WRAPPED_NATIVE_TOKEN);
 
-    AWrappedETH = await (
-      await ethers.getContractFactory("MockToken")
-    ).attach(AWRAPPED_NATIVE_V2_TOKEN);
-
     token = await (
       await ethers.getContractFactory("MockToken")
     ).attach(DAI_TOKEN);
-
-    aToken = await (
-      await ethers.getContractFactory("MockToken")
-    ).attach(ADAI_V2);
 
     providerAddress = await getTokenProvider(token.address);
     providerAddress = await ethers.getSigner(providerAddress);

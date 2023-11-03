@@ -11,7 +11,6 @@ import {
   USDT_TOKEN,
   AUSDT_V2_DEBT_STABLE,
   AUSDT_V2_DEBT_VARIABLE,
-  COMP_TOKEN,
   AWRAPPED_NATIVE_V2_DEBT_STABLE,
   AWRAPPED_NATIVE_V2_DEBT_VARIABLE,
   AAVE_RATEMODE,
@@ -21,7 +20,6 @@ import {
   DAI_TOKEN,
   ADAI_V2,
 } from "./utils/constants_eth";
-import { MAX_UINT256 } from "./utils/constants";
 
 import {
   getEntryPoint,
@@ -43,11 +41,7 @@ describe("AaveV2 Repay", async () => {
   let aaveV2handler: Contract;
   let WrappedETH: Contract;
   let debtWrappedETH: Contract;
-  let AWrappedETH: Contract;
   let token: Contract;
-  let debtToken: Contract;
-  let borrowToken: Contract;
-  let aToken: Contract;
   let provider: Contract;
   let lendingPool: Contract;
   let providerAddress: any;
@@ -136,17 +130,9 @@ describe("AaveV2 Repay", async () => {
       await ethers.getContractFactory("MockToken")
     ).attach(WRAPPED_NATIVE_TOKEN);
 
-    AWrappedETH = await (
-      await ethers.getContractFactory("MockToken")
-    ).attach(AWRAPPED_NATIVE_V2_TOKEN);
-
     token = await (
       await ethers.getContractFactory("MockToken")
     ).attach(DAI_TOKEN);
-
-    aToken = await (
-      await ethers.getContractFactory("MockToken")
-    ).attach(ADAI_V2);
 
     providerAddress = await getTokenProvider(token.address);
     providerAddress = await ethers.getSigner(providerAddress);
@@ -226,14 +212,6 @@ describe("AaveV2 Repay", async () => {
       debtWrappedETH = await (
         await ethers.getContractFactory("MockToken")
       ).attach(AWRAPPED_NATIVE_V2_DEBT_STABLE);
-
-      debtToken = await (
-        await ethers.getContractFactory("MockToken")
-      ).attach(AUSDT_V2_DEBT_STABLE);
-
-      borrowToken = await (
-        await ethers.getContractFactory("MockToken")
-      ).attach(USDT_TOKEN);
     });
 
     it("Partial", async function () {
@@ -521,7 +499,7 @@ describe("AaveV2 Repay", async () => {
       expect(afterExecBalance.sub(beforeExecBalance)).to.be.gt(
         value.sub(borrowAmount).sub(interestMax)
       );
-      
+
       expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
         0
       );
@@ -542,14 +520,6 @@ describe("AaveV2 Repay", async () => {
       debtWrappedETH = await (
         await ethers.getContractFactory("MockToken")
       ).attach(AWRAPPED_NATIVE_V2_DEBT_VARIABLE);
-
-      debtToken = await (
-        await ethers.getContractFactory("MockToken")
-      ).attach(AUSDT_V2_DEBT_VARIABLE);
-
-      borrowToken = await (
-        await ethers.getContractFactory("MockToken")
-      ).attach(USDT_TOKEN);
     });
 
     it("Partial", async function () {
@@ -781,7 +751,7 @@ describe("AaveV2 Repay", async () => {
         depositAmount,
         rateMode
       );
-      
+
       const extraNeed = ethers.utils.parseEther("1");
       const value = borrowAmount.add(extraNeed);
       const handler = aaveV2handler.address;
