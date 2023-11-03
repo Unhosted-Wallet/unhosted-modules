@@ -534,3 +534,318 @@ describe("AaveV2 Repay", async () => {
     });
   });
 
+  describe("Repay with Stable Rate", function () {
+    const depositAmount = ethers.utils.parseEther("10000");
+    const rateMode = AAVE_RATEMODE.VARIABLE;
+
+    before(async function () {
+      debtWrappedETH = await (
+        await ethers.getContractFactory("MockToken")
+      ).attach(AWRAPPED_NATIVE_V2_DEBT_VARIABLE);
+
+      debtToken = await (
+        await ethers.getContractFactory("MockToken")
+      ).attach(AUSDT_V2_DEBT_VARIABLE);
+
+      borrowToken = await (
+        await ethers.getContractFactory("MockToken")
+      ).attach(USDT_TOKEN);
+    });
+
+    it("Partial", async function () {
+      const { borrowAmount, userSA, ecdsaModule, errAbi } = await borrow(
+        depositAmount,
+        rateMode
+      );
+
+      const value = borrowAmount.div(2);
+      const handler = aaveV2handler.address;
+      const data = (
+        await ethers.getContractFactory("AaveV2Handler")
+      ).interface.encodeFunctionData("repay(address,uint256,uint256,address)", [
+        WrappedETH.address,
+        value,
+        rateMode,
+        userSA.address,
+      ]);
+
+      const { transaction, signature } =
+        await buildEcdsaModuleAuthorizedStrategyTx(
+          handler,
+          data,
+          userSA,
+          smartAccountOwner,
+          ecdsaModule.address,
+          strategyModule,
+          0
+        );
+
+      try {
+        await strategyModule.requiredTxFee(userSA.address, transaction);
+      } catch (error) {
+        fee = decodeError(error, errAbi).args;
+        fee = fee[0];
+      }
+
+      const execRes = await callExecStrategy(
+        strategyModule,
+        [userSA.address, transaction, signature],
+        ["uint256"],
+        fee
+      );
+
+      const afterExecBalance = await WrappedETH.balanceOf(userSA.address);
+      const afterExecDebtBalance = await debtWrappedETH.balanceOf(
+        userSA.address
+      );
+      const interestMax = borrowAmount.mul(1).div(10000);
+
+      // (borrowAmount - repayAmount -1) <= remainBorrowAmount < (borrowAmount + interestMax - repayAmount)
+      expect(execRes[0]).to.be.gte(borrowAmount.sub(value.add(1)));
+      expect(execRes[0]).to.be.lt(borrowAmount.sub(value).add(interestMax));
+
+      // (borrow - repay - 1) <= debtTokenUserAfter < (borrow + interestMax - repay)
+      expect(afterExecDebtBalance).to.be.gte(borrowAmount.sub(value).sub(1));
+      expect(afterExecDebtBalance).to.be.lt(
+        borrowAmount.add(interestMax).sub(value)
+      );
+      expect(afterExecBalance).to.be.eq(borrowAmount.sub(value));
+
+      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
+        0
+      );
+
+      expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
+
+      expect(await debtWrappedETH.balanceOf(strategyModule.address)).to.be.eq(
+        0
+      );
+    });
+
+    it("Partial by eth", async function () {
+      const { borrowAmount, userSA, ecdsaModule, errAbi } = await borrow(
+        depositAmount,
+        rateMode
+      );
+
+      const value = borrowAmount.div(2);
+      const handler = aaveV2handler.address;
+      const data = (
+        await ethers.getContractFactory("AaveV2Handler")
+      ).interface.encodeFunctionData("repayETH(uint256,uint256,address)", [
+        value,
+        rateMode,
+        userSA.address,
+      ]);
+
+      const { transaction, signature } =
+        await buildEcdsaModuleAuthorizedStrategyTx(
+          handler,
+          data,
+          userSA,
+          smartAccountOwner,
+          ecdsaModule.address,
+          strategyModule,
+          value.toString()
+        );
+
+      try {
+        await strategyModule.requiredTxFee(userSA.address, transaction);
+      } catch (error) {
+        fee = decodeError(error, errAbi).args;
+        fee = fee[0];
+      }
+
+      const beforeExecBalance = await waffle.provider.getBalance(
+        userSA.address
+      );
+
+      const execRes = await callExecStrategy(
+        strategyModule,
+        [userSA.address, transaction, signature],
+        ["uint256"],
+        fee
+      );
+
+      const afterExecBalance = await waffle.provider.getBalance(userSA.address);
+      const afterExecDebtBalance = await debtWrappedETH.balanceOf(
+        userSA.address
+      );
+      const interestMax = borrowAmount.mul(1).div(10000);
+
+      // (borrowAmount - repayAmount -1) <= remainBorrowAmount < (borrowAmount + interestMax - repayAmount)
+      expect(execRes[0]).to.be.gte(borrowAmount.sub(value.add(1)));
+      expect(execRes[0]).to.be.lt(borrowAmount.sub(value).add(interestMax));
+
+      // (borrow - repay - 1) <= debtTokenUserAfter < (borrow + interestMax - repay)
+      expect(afterExecDebtBalance).to.be.gte(borrowAmount.sub(value).sub(1));
+      expect(afterExecDebtBalance).to.be.lt(
+        borrowAmount.add(interestMax).sub(value)
+      );
+      expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
+
+      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
+        0
+      );
+
+      expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
+
+      expect(await debtWrappedETH.balanceOf(strategyModule.address)).to.be.eq(
+        0
+      );
+    });
+
+    it("Whole", async function () {
+      const { borrowAmount, userSA, ecdsaModule, errAbi } = await borrow(
+        depositAmount,
+        rateMode
+      );
+
+      const extraNeed = ethers.utils.parseEther("1");
+      const value = borrowAmount.add(extraNeed);
+      const handler = aaveV2handler.address;
+      const data = (
+        await ethers.getContractFactory("AaveV2Handler")
+      ).interface.encodeFunctionData("repay(address,uint256,uint256,address)", [
+        WrappedETH.address,
+        value,
+        rateMode,
+        userSA.address,
+      ]);
+
+      await WrappedETH.connect(wethProviderAddress).transfer(
+        userSA.address,
+        extraNeed
+      );
+
+      const { transaction, signature } =
+        await buildEcdsaModuleAuthorizedStrategyTx(
+          handler,
+          data,
+          userSA,
+          smartAccountOwner,
+          ecdsaModule.address,
+          strategyModule,
+          0
+        );
+
+      try {
+        await strategyModule.requiredTxFee(userSA.address, transaction);
+      } catch (error) {
+        fee = decodeError(error, errAbi).args;
+        fee = fee[0];
+      }
+
+      const beforeExecBalance = await waffle.provider.getBalance(
+        userSA.address
+      );
+
+      const execRes = await callExecStrategy(
+        strategyModule,
+        [userSA.address, transaction, signature],
+        ["uint256"],
+        fee
+      );
+
+      const afterExecBalance = await waffle.provider.getBalance(userSA.address);
+      const afterExecDebtBalance = await debtWrappedETH.balanceOf(
+        userSA.address
+      );
+      const interestMax = borrowAmount.mul(1).div(10000);
+
+      expect(execRes[0]).to.be.eq(0);
+      expect(afterExecDebtBalance).to.be.eq(0);
+
+      // (repay - borrow - interestMax) < borrowTokenUserAfter <= (repay - borrow)
+      expect(await WrappedETH.balanceOf(userSA.address)).to.be.gt(
+        value.sub(borrowAmount).sub(interestMax)
+      );
+      expect(await WrappedETH.balanceOf(userSA.address)).to.be.lte(
+        value.sub(borrowAmount)
+      );
+      expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(0);
+
+      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
+        0
+      );
+
+      expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
+
+      expect(await debtWrappedETH.balanceOf(strategyModule.address)).to.be.eq(
+        0
+      );
+    });
+
+    it("Whole by eth", async function () {
+      const { borrowAmount, userSA, ecdsaModule, errAbi } = await borrow(
+        depositAmount,
+        rateMode
+      );
+      
+      const extraNeed = ethers.utils.parseEther("1");
+      const value = borrowAmount.add(extraNeed);
+      const handler = aaveV2handler.address;
+      const data = (
+        await ethers.getContractFactory("AaveV2Handler")
+      ).interface.encodeFunctionData("repayETH(uint256,uint256,address)", [
+        value,
+        rateMode,
+        userSA.address,
+      ]);
+
+      const { transaction, signature } =
+        await buildEcdsaModuleAuthorizedStrategyTx(
+          handler,
+          data,
+          userSA,
+          smartAccountOwner,
+          ecdsaModule.address,
+          strategyModule,
+          value.toString()
+        );
+
+      try {
+        await strategyModule.requiredTxFee(userSA.address, transaction);
+      } catch (error) {
+        fee = decodeError(error, errAbi).args;
+        fee = fee[0];
+      }
+
+      const beforeExecBalance = await WrappedETH.balanceOf(userSA.address);
+
+      const execRes = await callExecStrategy(
+        strategyModule,
+        [userSA.address, transaction, signature],
+        ["uint256"],
+        fee
+      );
+
+      const afterExecBalance = await WrappedETH.balanceOf(userSA.address);
+      const afterExecDebtBalance = await debtWrappedETH.balanceOf(
+        userSA.address
+      );
+      const interestMax = borrowAmount.mul(1).div(10000);
+
+      expect(execRes[0]).to.be.eq(0);
+      expect(afterExecDebtBalance).to.be.eq(0);
+
+      // (repay - borrow - interestMax) < borrowTokenUserAfter <= (repay - borrow)
+      expect(afterExecBalance.sub(beforeExecBalance)).to.be.lte(
+        value.sub(borrowAmount)
+      );
+      expect(afterExecBalance.sub(beforeExecBalance)).to.be.gt(
+        value.sub(borrowAmount).sub(interestMax)
+      );
+
+      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
+        0
+      );
+
+      expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
+
+      expect(await debtWrappedETH.balanceOf(strategyModule.address)).to.be.eq(
+        0
+      );
+    });
+  });
+});
