@@ -4,7 +4,6 @@ pragma solidity 0.8.20;
 import {Proxy} from "contracts/Proxy.sol";
 import {IStrategyModuleFactory} from "contracts/interfaces/IStrategyFactory.sol";
 import {IStrategyModule} from "contracts/interfaces/IStrategyModule.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title Strategy Module Factory - factory responsible for deploying Strategy Modules using CREATE2
@@ -12,7 +11,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * This allows keeping the same address for the same Strategy Module owner on various chains via CREATE2
  * @author M. Zakeri Rad - <@zakrad>
  */
-contract StrategyModuleFactory is Ownable, IStrategyModuleFactory {
+contract StrategyModuleFactory is IStrategyModuleFactory {
     address public immutable basicImplementation;
 
     constructor(address _basicImplementation) {
