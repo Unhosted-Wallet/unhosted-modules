@@ -47,7 +47,7 @@ abstract contract BaseHandler {
 
         // ETH case
         if (token == address(0) || token == NATIVE_TOKEN_ADDRESS) {
-            return address(this).balance;
+            return amount;
         }
         // ERC20 token case
         return IERC20(token).balanceOf(address(this));

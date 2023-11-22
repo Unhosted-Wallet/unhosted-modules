@@ -185,12 +185,7 @@ describe("AaveV2 flashloan", async () => {
         fee = fee[0];
       }
 
-      await strategyModule.execStrategy(
-        userSA.address,
-        transaction,
-        signature,
-        { value: fee }
-      );
+      await strategyModule.execStrategy(userSA.address, transaction, signature);
 
       const afterExecBalance = await token.balanceOf(userSA.address);
 
@@ -245,12 +240,7 @@ describe("AaveV2 flashloan", async () => {
         fee = fee[0];
       }
 
-      await strategyModule.execStrategy(
-        userSA.address,
-        transaction,
-        signature,
-        { value: fee }
-      );
+      await strategyModule.execStrategy(userSA.address, transaction, signature);
 
       const afterExecBalance = await WrappedETH.balanceOf(userSA.address);
 
@@ -312,12 +302,7 @@ describe("AaveV2 flashloan", async () => {
         fee = fee[0];
       }
 
-      await strategyModule.execStrategy(
-        userSA.address,
-        transaction,
-        signature,
-        { value: fee }
-      );
+      await strategyModule.execStrategy(userSA.address, transaction, signature);
 
       const afterExecBalance = await token.balanceOf(userSA.address);
       const afterExecBalanceWeth = await WrappedETH.balanceOf(userSA.address);

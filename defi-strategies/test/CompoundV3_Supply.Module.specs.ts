@@ -192,8 +192,7 @@ describe("Compound V3 supply", async () => {
         await strategyModule.execStrategy(
           userSA.address,
           transaction,
-          signature,
-          { value: fee }
+          signature
         );
 
         const afterExecBalance = await baseToken.balanceOf(comet.address);
@@ -203,10 +202,6 @@ describe("Compound V3 supply", async () => {
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
 
         expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
       });
 
       it("max amount", async function () {
@@ -247,8 +242,7 @@ describe("Compound V3 supply", async () => {
         await strategyModule.execStrategy(
           userSA.address,
           transaction,
-          signature,
-          { value: fee }
+          signature
         );
 
         const afterExecBalance = await baseToken.balanceOf(comet.address);
@@ -258,10 +252,6 @@ describe("Compound V3 supply", async () => {
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
 
         expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
       });
 
       it("by repay", async function () {
@@ -301,8 +291,7 @@ describe("Compound V3 supply", async () => {
         await strategyModule.execStrategy(
           userSA.address,
           transaction,
-          signature,
-          { value: fee }
+          signature
         );
 
         const afterExecBalance = await baseToken.balanceOf(comet.address);
@@ -312,10 +301,6 @@ describe("Compound V3 supply", async () => {
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
 
         expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
       });
     });
 
@@ -368,8 +353,7 @@ describe("Compound V3 supply", async () => {
         await strategyModule.execStrategy(
           userSA.address,
           transaction,
-          signature,
-          { value: fee }
+          signature
         );
 
         const afterExecBalance = await baseToken.balanceOf(comet.address);
@@ -379,62 +363,6 @@ describe("Compound V3 supply", async () => {
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
 
         expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
-      });
-
-      it("max amount", async function () {
-        const { userSA, ecdsaModule, errAbi } = await setupTests();
-        const value = await waffle.provider.getBalance(userSA.address);
-        const handler = compoundV3handler.address;
-
-        const data = (
-          await ethers.getContractFactory("CompoundV3Handler")
-        ).interface.encodeFunctionData("supplyETH(address,uint256)", [
-          comet.address,
-          MAX_UINT256,
-        ]);
-
-        const { transaction, signature } =
-          await buildEcdsaModuleAuthorizedStrategyTx(
-            handler,
-            data,
-            userSA,
-            smartAccountOwner,
-            ecdsaModule.address,
-            strategyModule,
-            value.toString()
-          );
-
-        const beforeExecBalance = await baseToken.balanceOf(comet.address);
-
-        try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
-        } catch (error) {
-          fee = decodeError(error, errAbi).args;
-          fee = fee[0];
-        }
-
-        await strategyModule.execStrategy(
-          userSA.address,
-          transaction,
-          signature,
-          { value: fee }
-        );
-
-        const afterExecBalance = await baseToken.balanceOf(comet.address);
-
-        expect(afterExecBalance).to.be.eq(value.add(beforeExecBalance));
-
-        expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
-
-        expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
       });
 
       it("by repayETH", async function () {
@@ -472,8 +400,7 @@ describe("Compound V3 supply", async () => {
         await strategyModule.execStrategy(
           userSA.address,
           transaction,
-          signature,
-          { value: fee }
+          signature
         );
 
         const afterExecBalance = await baseToken.balanceOf(comet.address);
@@ -483,10 +410,6 @@ describe("Compound V3 supply", async () => {
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
 
         expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
       });
     });
     describe("Token-collateral", function () {
@@ -541,8 +464,7 @@ describe("Compound V3 supply", async () => {
         await strategyModule.execStrategy(
           userSA.address,
           transaction,
-          signature,
-          { value: fee }
+          signature
         );
 
         const afterExecBalance = await baseToken.balanceOf(comet.address);
@@ -563,10 +485,6 @@ describe("Compound V3 supply", async () => {
         ).to.be.eq(0);
 
         expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
       });
 
       it("max amount", async function () {
@@ -611,8 +529,7 @@ describe("Compound V3 supply", async () => {
         await strategyModule.execStrategy(
           userSA.address,
           transaction,
-          signature,
-          { value: fee }
+          signature
         );
 
         const afterExecBalance = await baseToken.balanceOf(comet.address);
@@ -633,10 +550,6 @@ describe("Compound V3 supply", async () => {
         ).to.be.eq(0);
 
         expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
       });
     });
 
@@ -686,8 +599,7 @@ describe("Compound V3 supply", async () => {
         await strategyModule.execStrategy(
           userSA.address,
           transaction,
-          signature,
-          { value: fee }
+          signature
         );
 
         const afterExecBalance = await baseToken.balanceOf(comet.address);
@@ -708,74 +620,6 @@ describe("Compound V3 supply", async () => {
         ).to.be.eq(0);
 
         expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
-      });
-
-      it("max amount", async function () {
-        const { userSA, ecdsaModule, errAbi } = await setupTests();
-        const collateral = WrappedETH;
-        const value = await waffle.provider.getBalance(userSA.address);
-        const handler = compoundV3handler.address;
-
-        const data = (
-          await ethers.getContractFactory("CompoundV3Handler")
-        ).interface.encodeFunctionData("supplyETH(address,uint256)", [
-          comet.address,
-          MAX_UINT256,
-        ]);
-
-        const { transaction, signature } =
-          await buildEcdsaModuleAuthorizedStrategyTx(
-            handler,
-            data,
-            userSA,
-            smartAccountOwner,
-            ecdsaModule.address,
-            strategyModule,
-            value.toString()
-          );
-
-        const beforeExecBalance = await baseToken.balanceOf(comet.address);
-
-        try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
-        } catch (error) {
-          fee = decodeError(error, errAbi).args;
-          fee = fee[0];
-        }
-
-        await strategyModule.execStrategy(
-          userSA.address,
-          transaction,
-          signature,
-          { value: fee }
-        );
-
-        const afterExecBalance = await baseToken.balanceOf(comet.address);
-
-        expect(afterExecBalance).to.be.eq(value.add(beforeExecBalance));
-
-        expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
-
-        expect(
-          await comet.collateralBalanceOf(userSA.address, collateral.address)
-        ).to.be.eq(value);
-
-        expect(
-          await comet.collateralBalanceOf(
-            strategyModule.address,
-            collateral.address
-          )
-        ).to.be.eq(0);
-
-        expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
       });
     });
   });

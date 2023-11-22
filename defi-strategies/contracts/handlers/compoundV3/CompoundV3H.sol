@@ -19,7 +19,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
         address comet,
         address asset,
         uint256 amount
-    ) external payable {
+    ) public payable {
         _requireMsg(amount != 0, "supply", "zero amount");
         amount = _getBalance(asset, amount);
         _supply(
@@ -30,7 +30,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
         );
     }
 
-    function supplyETH(address comet, uint256 amount) external payable {
+    function supplyETH(address comet, uint256 amount) public payable {
         _requireMsg(amount != 0, "supplyETH", "zero amount");
         amount = _getBalance(NATIVE_TOKEN_ADDRESS, amount);
         wrappedNativeTokenCompV3.deposit{value: amount}();
@@ -47,7 +47,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
         address comet,
         address asset,
         uint256 amount
-    ) external payable returns (uint256 withdrawAmount) {
+    ) public payable returns (uint256 withdrawAmount) {
         _requireMsg(amount != 0, "withdraw", "zero amount");
 
         // No _getBalance: because we use comet.allow() to help users withdraw
@@ -66,7 +66,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
     function withdrawETH(
         address comet,
         uint256 amount
-    ) external payable returns (uint256 withdrawAmount) {
+    ) public payable returns (uint256 withdrawAmount) {
         _requireMsg(amount != 0, "withdrawETH", "zero amount");
 
         // No _getBalance: because we use comet.allow() to help users withdraw
@@ -86,7 +86,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
     function borrow(
         address comet,
         uint256 amount
-    ) external payable returns (uint256 borrowAmount) {
+    ) public payable returns (uint256 borrowAmount) {
         _requireMsg(amount != 0, "borrow", "zero amount");
 
         bool isBorrowed;
@@ -105,7 +105,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
     function borrowETH(
         address comet,
         uint256 amount
-    ) external payable returns (uint256 borrowAmount) {
+    ) public payable returns (uint256 borrowAmount) {
         _requireMsg(
             IComet(comet).baseToken() == address(wrappedNativeTokenCompV3),
             "borrowETH",
@@ -126,7 +126,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
         wrappedNativeTokenCompV3.withdraw(borrowAmount);
     }
 
-    function repay(address comet, uint256 amount) external payable {
+    function repay(address comet, uint256 amount) public payable {
         _requireMsg(amount != 0, "repay", "zero amount");
 
         address asset = IComet(comet).baseToken();
@@ -139,7 +139,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
         );
     }
 
-    function repayETH(address comet, uint256 amount) external payable {
+    function repayETH(address comet, uint256 amount) public payable {
         _requireMsg(
             IComet(comet).baseToken() == address(wrappedNativeTokenCompV3),
             "repayETH",

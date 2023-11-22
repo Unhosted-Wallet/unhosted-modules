@@ -3,8 +3,10 @@ import { Contract } from "ethers";
 import { AddressZero } from "@ethersproject/constants";
 import { ethers, deployments, waffle } from "hardhat";
 
+let deployer;
+let mockCaller;
 describe("Strategy Factory", async () => {
-  const [deployer] = waffle.provider.getWallets();
+  [deployer, mockCaller] = waffle.provider.getWallets();
   let strategyModule: Contract;
   let implementation: Contract;
   let strategyFactory: Contract;
@@ -96,11 +98,25 @@ describe("Strategy Factory", async () => {
       ).to.be.revertedWith("AlreadyInitialized");
     });
 
+    it("should revert to claim accumulated fees by invalid caller", async function () {
+      const { strategyModule } = await setupTests();
+
+      await expect(
+        strategyModule.connect(mockCaller).claim()
+      ).to.be.revertedWith("NotAuthorized");
+    });
+
+    it("should claim fees by beneficiary", async function () {
+      const { strategyModule } = await setupTests();
+
+      await strategyModule.claim();
+    });
+
     it("should supports IStrategyModule interface by ERC165", async function () {
       const { factory, strategyModule } = await setupTests();
-      // 0xf8572868 IStrategyModule interface id
-      expect(await strategyModule.supportsInterface(0xf8572868)).to.be.eq(true);
-      expect(await strategyModule.supportsInterface(0xf8572867)).to.be.eq(
+      // 0xb626f145 IStrategyModule interface id
+      expect(await strategyModule.supportsInterface(0xb626f145)).to.be.eq(true);
+      expect(await strategyModule.supportsInterface(0xb626f144)).to.be.eq(
         false
       );
     });

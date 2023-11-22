@@ -48,12 +48,16 @@ contract StrategyModule is
 
     error AlreadyInitialized();
     error AddressCanNotBeZero();
+    error NotAuthorized();
+    error FeeTransferFailed(uint256);
     error RevertEstimation(uint256);
 
     constructor(address gasFeed_) {
         CHAIN_ID = block.chainid;
         _gasFeed = gasFeed_;
     }
+
+    receive() external payable {}
 
     function init(
         address beneficiary_,
@@ -77,10 +81,9 @@ contract StrategyModule is
         bytes memory signatures
     )
         public
-        payable
         virtual
         nonReentrant
-        returns (bool success, bytes memory returnData)
+        returns (uint256 fee, bool executed, bytes memory returnData)
     {
         bytes32 txHash;
 
@@ -104,21 +107,29 @@ contract StrategyModule is
 
         {
             uint256 startGas = gasleft();
-            (success, returnData) = IExecFromModule(smartAccount)
+            (executed, returnData) = IExecFromModule(smartAccount)
                 .execTransactionFromModuleReturnData(
                     handler,
                     _tx.value,
                     _tx.data,
                     Enum.Operation.DelegateCall
                 );
-            uint256 used = (startGas - gasleft());
+            fee = (startGas - gasleft());
 
             (, int256 answer, , , ) = AggregatorV3Interface(_gasFeed)
                 .latestRoundData();
-            used = (used * uint256(answer) * _feeFactor) / 1e4;
+            fee = (fee * uint256(answer) * _feeFactor) / 1e4;
 
-            payable(beneficiary).transfer(used);
-            payable(msg.sender).transfer(msg.value - used);
+            bool success = IExecFromModule(smartAccount)
+                .execTransactionFromModule(
+                    address(this),
+                    fee,
+                    "",
+                    Enum.Operation.Call
+                );
+            if (!success) {
+                revert FeeTransferFailed(fee);
+            }
         }
     }
 
@@ -137,13 +148,23 @@ contract StrategyModule is
             _tx.data,
             Enum.Operation.DelegateCall
         );
-        uint256 used = (startGas - gasleft());
+        uint256 fee = (startGas - gasleft());
 
         (, int256 answer, , , ) = AggregatorV3Interface(_gasFeed)
             .latestRoundData();
 
-        used = (used * uint256(answer) * _feeFactor) / 1e4;
-        revert RevertEstimation(used);
+        fee = (fee * uint256(answer) * _feeFactor) / 1e4;
+        revert RevertEstimation(fee);
+    }
+
+    /**
+     * @dev See {IStrategyModule-claim}.
+     */
+    function claim() public {
+        if (msg.sender != beneficiary) {
+            revert NotAuthorized();
+        }
+        beneficiary.call{value: address(this).balance}("");
     }
 
     /**

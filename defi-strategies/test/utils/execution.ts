@@ -135,24 +135,46 @@ export const call = async (
 export const callExecStrategy = async (
   contract: Contract,
   params: any[],
-  output: string[],
-  fee: any
+  output: string[]
 ): Promise<any> => {
   const data = contract.interface.encodeFunctionData("execStrategy", params);
 
   const txRes = await waffle.provider.call({
     to: contract.address,
     data: data,
-    value: fee,
   });
 
-  const result = ethers.utils.defaultAbiCoder.decode(["bool", "bytes"], txRes);
+  const result = ethers.utils.defaultAbiCoder.decode(
+    ["uint256", "bool", "bytes"],
+    txRes
+  );
 
-  const decodedResult = ethers.utils.defaultAbiCoder.decode(output, result[1]);
+  const decodedResult = ethers.utils.defaultAbiCoder.decode(output, result[2]);
 
-  await contract.execStrategy(params[0], params[1], params[2], { value: fee });
+  await contract.execStrategy(params[0], params[1], params[2]);
 
-  return decodedResult;
+  return [decodedResult[0], result[0]];
+};
+
+export const callExecStrategyReturnFee = async (
+  contract: Contract,
+  params: any[]
+): Promise<any> => {
+  const data = contract.interface.encodeFunctionData("execStrategy", params);
+
+  const txRes = await waffle.provider.call({
+    to: contract.address,
+    data: data,
+  });
+
+  const result = ethers.utils.defaultAbiCoder.decode(
+    ["uint256", "bool", "bytes"],
+    txRes
+  );
+
+  await contract.execStrategy(params[0], params[1], params[2]);
+
+  return result[0];
 };
 
 export const calculateSafeDomainSeparator = (

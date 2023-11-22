@@ -32,7 +32,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint256 amountIn,
         uint256 amountOutMinimum,
         uint160 sqrtPriceLimitX96
-    ) external payable returns (uint256 amountOut) {
+    ) public payable returns (uint256 amountOut) {
         // Build params for router call
         ISwapRouter.ExactInputSingleParams memory params;
         params.tokenIn = address(wrappedNativeTokenUniV3);
@@ -51,7 +51,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint256 amountIn,
         uint256 amountOutMinimum,
         uint160 sqrtPriceLimitX96
-    ) external payable returns (uint256 amountOut) {
+    ) public payable returns (uint256 amountOut) {
         // Build params for router call
         ISwapRouter.ExactInputSingleParams memory params;
         params.tokenIn = tokenIn;
@@ -75,7 +75,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint256 amountIn,
         uint256 amountOutMinimum,
         uint160 sqrtPriceLimitX96
-    ) external payable returns (uint256 amountOut) {
+    ) public payable returns (uint256 amountOut) {
         // Build params for router call
         ISwapRouter.ExactInputSingleParams memory params;
         params.tokenIn = tokenIn;
@@ -95,7 +95,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         bytes memory path,
         uint256 amountIn,
         uint256 amountOutMinimum
-    ) external payable returns (uint256 amountOut) {
+    ) public payable returns (uint256 amountOut) {
         // Extract tokenIn and tokenOut
         address tokenIn = _getFirstToken(path);
         // Input token must be WETH
@@ -117,7 +117,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         bytes memory path,
         uint256 amountIn,
         uint256 amountOutMinimum
-    ) external payable returns (uint256 amountOut) {
+    ) public payable returns (uint256 amountOut) {
         // Extract tokenIn and tokenOut
         address tokenIn = _getFirstToken(path);
         address tokenOut = _getLastToken(path);
@@ -144,7 +144,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         bytes memory path,
         uint256 amountIn,
         uint256 amountOutMinimum
-    ) external payable returns (uint256 amountOut) {
+    ) public payable returns (uint256 amountOut) {
         // Extract tokenIn
         address tokenIn = _getFirstToken(path);
         // Build params for router call
@@ -165,7 +165,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint256 amountOut,
         uint256 amountInMaximum,
         uint160 sqrtPriceLimitX96
-    ) external payable returns (uint256 amountIn) {
+    ) public payable returns (uint256 amountIn) {
         // Build params for router call
         ISwapRouter.ExactOutputSingleParams memory params;
         params.tokenIn = address(wrappedNativeTokenUniV3);
@@ -186,7 +186,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint256 amountOut,
         uint256 amountInMaximum,
         uint160 sqrtPriceLimitX96
-    ) external payable returns (uint256 amountIn) {
+    ) public payable returns (uint256 amountIn) {
         // Build params for router call
         ISwapRouter.ExactOutputSingleParams memory params;
         params.tokenIn = tokenIn;
@@ -211,7 +211,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint256 amountOut,
         uint256 amountInMaximum,
         uint160 sqrtPriceLimitX96
-    ) external payable returns (uint256 amountIn) {
+    ) public payable returns (uint256 amountIn) {
         // Build params for router call
         ISwapRouter.ExactOutputSingleParams memory params;
         params.tokenIn = tokenIn;
@@ -232,7 +232,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         bytes memory path,
         uint256 amountOut,
         uint256 amountInMaximum
-    ) external payable returns (uint256 amountIn) {
+    ) public payable returns (uint256 amountIn) {
         // Extract tokenIn
         // Note that the first token is tokenOut in exactOutput functions, vice versa
         address tokenIn = _getLastToken(path);
@@ -256,7 +256,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         bytes memory path,
         uint256 amountOut,
         uint256 amountInMaximum
-    ) external payable returns (uint256 amountIn) {
+    ) public payable returns (uint256 amountIn) {
         // Extract tokenIn and tokenOut
         // Note that the first token is tokenOut in exactOutput functions, vice versa
         address tokenIn = _getLastToken(path);
@@ -285,7 +285,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         bytes memory path,
         uint256 amountOut,
         uint256 amountInMaximum
-    ) external payable returns (uint256 amountIn) {
+    ) public payable returns (uint256 amountIn) {
         // Extract tokenIn
         // Note that the first token is tokenOut in exactOutput functions, vice versa
         address tokenIn = _getLastToken(path);

@@ -26,6 +26,10 @@ contract MockHandler {
         );
     }
 
+    function emptyWallet() external {
+        address(strategyModule).call{value: address(this).balance}("");
+    }
+
     function checkInterface(
         address strategyModule
     ) external view returns (bool) {

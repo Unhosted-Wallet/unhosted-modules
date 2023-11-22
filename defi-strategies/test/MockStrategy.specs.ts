@@ -141,6 +141,31 @@ describe("Mock Handler", async () => {
     }
   });
 
+  it("Should revert if there is not enough fee in user SA", async function () {
+    const { userSA, ecdsaModule } = await setupTests();
+    const value = ethers.utils.parseEther("1");
+    const handler = mockHandler.address;
+
+    const data = (
+      await ethers.getContractFactory("MockHandler")
+    ).interface.encodeFunctionData("emptyWallet()");
+
+    const { transaction, signature } =
+      await buildEcdsaModuleAuthorizedStrategyTx(
+        handler,
+        data,
+        userSA,
+        smartAccountOwner,
+        ecdsaModule.address,
+        strategyModule,
+        0
+      );
+
+    await expect(
+      strategyModule.execStrategy(userSA.address, transaction, signature)
+    ).to.be.revertedWith("FeeTransferFailed");
+  });
+
   it("Should get the transaction hash", async function () {
     const { userSA, ecdsaModule } = await setupTests();
     const handler = mockHandler.address;

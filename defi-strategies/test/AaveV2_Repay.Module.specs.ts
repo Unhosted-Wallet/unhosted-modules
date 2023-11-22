@@ -87,9 +87,7 @@ describe("AaveV2 Repay", async () => {
       fee = fee[0];
     }
 
-    await strategyModule.execStrategy(userSA.address, transaction, signature, {
-      value: fee,
-    });
+    await strategyModule.execStrategy(userSA.address, transaction, signature);
 
     return {
       borrowAmount: value,
@@ -252,8 +250,7 @@ describe("AaveV2 Repay", async () => {
       const execRes = await callExecStrategy(
         strategyModule,
         [userSA.address, transaction, signature],
-        ["uint256"],
-        fee
+        ["uint256"]
       );
 
       const afterExecBalance = await WrappedETH.balanceOf(userSA.address);
@@ -272,10 +269,6 @@ describe("AaveV2 Repay", async () => {
         borrowAmount.add(interestMax).sub(value)
       );
       expect(afterExecBalance).to.be.eq(borrowAmount.sub(value));
-
-      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
-        0
-      );
 
       expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
 
@@ -325,8 +318,7 @@ describe("AaveV2 Repay", async () => {
       const execRes = await callExecStrategy(
         strategyModule,
         [userSA.address, transaction, signature],
-        ["uint256"],
-        fee
+        ["uint256"]
       );
 
       const afterExecBalance = await waffle.provider.getBalance(userSA.address);
@@ -344,10 +336,9 @@ describe("AaveV2 Repay", async () => {
       expect(afterExecDebtBalance).to.be.lt(
         borrowAmount.add(interestMax).sub(value)
       );
-      expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
-
-      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
-        0
+      expect(beforeExecBalance.sub(afterExecBalance)).to.be.within(
+        value.add(execRes[1]),
+        value.add(execRes[1]).add(ethers.utils.parseEther("0.0001"))
       );
 
       expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
@@ -405,8 +396,7 @@ describe("AaveV2 Repay", async () => {
       const execRes = await callExecStrategy(
         strategyModule,
         [userSA.address, transaction, signature],
-        ["uint256"],
-        fee
+        ["uint256"]
       );
 
       const afterExecBalance = await waffle.provider.getBalance(userSA.address);
@@ -426,10 +416,9 @@ describe("AaveV2 Repay", async () => {
       expect(await WrappedETH.balanceOf(userSA.address)).to.be.lte(
         value.sub(borrowAmount)
       );
-      expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(0);
-
-      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
-        0
+      expect(beforeExecBalance.sub(afterExecBalance)).to.be.within(
+        execRes[1],
+        fee
       );
 
       expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
@@ -479,8 +468,7 @@ describe("AaveV2 Repay", async () => {
       const execRes = await callExecStrategy(
         strategyModule,
         [userSA.address, transaction, signature],
-        ["uint256"],
-        fee
+        ["uint256"]
       );
 
       const afterExecBalance = await WrappedETH.balanceOf(userSA.address);
@@ -498,10 +486,6 @@ describe("AaveV2 Repay", async () => {
       );
       expect(afterExecBalance.sub(beforeExecBalance)).to.be.gt(
         value.sub(borrowAmount).sub(interestMax)
-      );
-
-      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
-        0
       );
 
       expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
@@ -560,8 +544,7 @@ describe("AaveV2 Repay", async () => {
       const execRes = await callExecStrategy(
         strategyModule,
         [userSA.address, transaction, signature],
-        ["uint256"],
-        fee
+        ["uint256"]
       );
 
       const afterExecBalance = await WrappedETH.balanceOf(userSA.address);
@@ -580,10 +563,6 @@ describe("AaveV2 Repay", async () => {
         borrowAmount.add(interestMax).sub(value)
       );
       expect(afterExecBalance).to.be.eq(borrowAmount.sub(value));
-
-      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
-        0
-      );
 
       expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
 
@@ -633,8 +612,7 @@ describe("AaveV2 Repay", async () => {
       const execRes = await callExecStrategy(
         strategyModule,
         [userSA.address, transaction, signature],
-        ["uint256"],
-        fee
+        ["uint256"]
       );
 
       const afterExecBalance = await waffle.provider.getBalance(userSA.address);
@@ -652,10 +630,9 @@ describe("AaveV2 Repay", async () => {
       expect(afterExecDebtBalance).to.be.lt(
         borrowAmount.add(interestMax).sub(value)
       );
-      expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
-
-      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
-        0
+      expect(beforeExecBalance.sub(afterExecBalance)).to.be.within(
+        value.add(execRes[1]),
+        value.add(execRes[1]).add(ethers.utils.parseEther("0.0001"))
       );
 
       expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
@@ -713,8 +690,7 @@ describe("AaveV2 Repay", async () => {
       const execRes = await callExecStrategy(
         strategyModule,
         [userSA.address, transaction, signature],
-        ["uint256"],
-        fee
+        ["uint256"]
       );
 
       const afterExecBalance = await waffle.provider.getBalance(userSA.address);
@@ -733,10 +709,9 @@ describe("AaveV2 Repay", async () => {
       expect(await WrappedETH.balanceOf(userSA.address)).to.be.lte(
         value.sub(borrowAmount)
       );
-      expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(0);
-
-      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
-        0
+      expect(beforeExecBalance.sub(afterExecBalance)).to.be.within(
+        execRes[1],
+        fee
       );
 
       expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
@@ -786,8 +761,7 @@ describe("AaveV2 Repay", async () => {
       const execRes = await callExecStrategy(
         strategyModule,
         [userSA.address, transaction, signature],
-        ["uint256"],
-        fee
+        ["uint256"]
       );
 
       const afterExecBalance = await WrappedETH.balanceOf(userSA.address);
@@ -805,10 +779,6 @@ describe("AaveV2 Repay", async () => {
       );
       expect(afterExecBalance.sub(beforeExecBalance)).to.be.gt(
         value.sub(borrowAmount).sub(interestMax)
-      );
-
-      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
-        0
       );
 
       expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);

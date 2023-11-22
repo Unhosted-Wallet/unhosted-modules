@@ -62,14 +62,15 @@ interface IStrategyModule {
      * @param smartAccount, address of biconomy smart account to execute strategy for
      * @param _tx, StrategyTransaction structure including amount if value to send to handler, gas and the arbitrary data to call on handler
      * @param signatures, signature that should be signed by SA owner following EIP1271
-     * @return success whether the call is success or fail
+     * @return fee paid fee to beneficiary
+     * @return executed whether the execution is success or fail
      * @return returnData the data returned from handler called function
      */
     function execStrategy(
         address smartAccount,
         StrategyTransaction memory _tx,
         bytes memory signatures
-    ) external payable returns (bool success, bytes memory returnData);
+    ) external returns (uint256 fee, bool executed, bytes memory returnData);
 
     /**
      * @dev Allows to estimate a transaction.
@@ -82,6 +83,11 @@ interface IStrategyModule {
         address smartAccount,
         StrategyTransaction memory _tx
     ) external;
+
+    /**
+     * @dev Allows beneficiary to claim the accumulated fees in module contract
+     */
+    function claim() external;
 
     /**
      * @dev Returns hash to be signed by owner.
