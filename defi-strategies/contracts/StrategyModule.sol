@@ -21,9 +21,9 @@ contract StrategyModule is
     ISignatureValidatorConstants,
     IStrategyModule
 {
-    // Domain Seperators keccak256("EIP712Domain(uint256 chainId,address verifyingContract)");
+    // Domain Seperators keccak256("EIP712Domain(uint256 chainId,address verifyingContract,bytes32 salt)");
     bytes32 internal constant DOMAIN_SEPARATOR_TYPEHASH =
-        0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
+        0x71062c282d40422f744945d587dbf4ecfd4f9cfad1d35d62c944373009d96162;
 
     //ExecuteStrategy
     // solhint-disable-next-line
@@ -221,7 +221,12 @@ contract StrategyModule is
     ) public view returns (bytes32) {
         return
             keccak256(
-                abi.encode(DOMAIN_SEPARATOR_TYPEHASH, CHAIN_ID, smartAccount)
+                abi.encode(
+                    DOMAIN_SEPARATOR_TYPEHASH,
+                    CHAIN_ID,
+                    address(this),
+                    bytes32(uint256(uint160(smartAccount)))
+                )
             );
     }
 

@@ -20,6 +20,7 @@ export const EIP_DOMAIN = {
   EIP712Domain: [
     { type: "uint256", name: "chainId" },
     { type: "address", name: "verifyingContract" },
+    { type: "bytes32", name: "salt" },
   ],
 };
 
@@ -285,7 +286,11 @@ export const strategySignTypedData = async (
   return {
     signer: signerAddress,
     data: await signer._signTypedData(
-      { verifyingContract: safe.address, chainId: cid },
+      {
+        verifyingContract: strategyModule.address,
+        chainId: cid,
+        salt: ethers.utils.hexZeroPad(safe.address, 32),
+      },
       EIP712_EXECUTE_STRATEGY_TYPE,
       {
         handler: handler,

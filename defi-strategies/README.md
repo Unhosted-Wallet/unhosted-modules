@@ -31,6 +31,7 @@ The strategy module signatures are EIP-712 based. And uses the following scheme:
   "EIP712Domain": [
     { "type": "uint256", "name": "chainId" },
     { "type": "address", "name": "verifyingContract" }
+    { "type": "bytes32", "name": "salt" }
   ]
 }
 ```
