@@ -118,7 +118,7 @@ describe("AaveV2 Deposit & Withdraw", async () => {
 
     const callbackHandler = await (
       await ethers.getContractFactory("FlashloanCallbackHandler")
-    ).deploy();
+    ).deploy(AAVEPROTOCOL_V2_PROVIDER);
 
     aaveV2handler = await (
       await ethers.getContractFactory("AaveV2Handler")
