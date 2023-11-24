@@ -7,11 +7,12 @@ pragma solidity 0.8.19;
  * @dev Implementation address is stored in the slot defined by the Proxy's address
  */
 contract Proxy {
+    error InvalidAddress();
+
     constructor(address _implementation) {
-        require(
-            _implementation != address(0),
-            "Invalid implementation address"
-        );
+        if (_implementation == address(0)) {
+            revert InvalidAddress();
+        }
         assembly {
             sstore(address(), _implementation)
         }

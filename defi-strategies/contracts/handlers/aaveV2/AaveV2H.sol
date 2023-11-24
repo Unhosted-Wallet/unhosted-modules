@@ -106,26 +106,31 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
         uint256[] calldata modes,
         bytes calldata params
     ) public payable {
-        _requireMsg(
-            assets.length == amounts.length,
-            "flashLoan",
-            "assets and amounts do not match"
-        );
+        {
+            uint256 length = assets.length;
+            _requireMsg(
+                length == amounts.length,
+                "flashLoan",
+                "assets and amounts do not match"
+            );
 
-        _requireMsg(
-            assets.length == modes.length,
-            "flashLoan",
-            "assets and modes do not match"
-        );
-
+            _requireMsg(
+                length == modes.length,
+                "flashLoan",
+                "assets and modes do not match"
+            );
+        }
         address handler;
         address flashloanHandler = fallbackHandler;
         address onBehalfOf = address(this);
         address pool = ILendingPoolAddressesProviderV2(provider)
             .getLendingPool();
 
-        for (uint256 i = 0; i < assets.length; i++) {
+        for (uint256 i; i < assets.length; ) {
             _tokenApprove(assets[i], pool, type(uint256).max);
+            unchecked {
+                ++i;
+            }
         }
 
         assembly {
@@ -156,8 +161,11 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
         }
 
         // approve lending pool zero
-        for (uint256 i = 0; i < assets.length; i++) {
+        for (uint256 i; i < assets.length; ) {
             _tokenApproveZero(assets[i], pool);
+            unchecked {
+                ++i;
+            }
         }
     }
 

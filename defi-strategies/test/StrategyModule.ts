@@ -147,7 +147,7 @@ describe("Strategy Factory", async () => {
       );
 
       await expect(proxyFactory.deploy(AddressZero)).to.be.revertedWith(
-        "Invalid implementation address"
+        "InvalidAddress"
       );
     });
   });
