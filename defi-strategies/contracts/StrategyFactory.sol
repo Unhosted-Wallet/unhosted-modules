@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import {Proxy} from "contracts/Proxy.sol";
 import {IStrategyModuleFactory} from "contracts/interfaces/IStrategyFactory.sol";
 import {IStrategyModule} from "contracts/interfaces/IStrategyModule.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title Strategy Module Factory - factory responsible for deploying Strategy Modules using CREATE2
@@ -11,15 +12,26 @@ import {IStrategyModule} from "contracts/interfaces/IStrategyModule.sol";
  * This allows keeping the same address for the same Strategy Module owner on various chains via CREATE2
  * @author M. Zakeri Rad - <@zakrad>
  */
-contract StrategyModuleFactory is IStrategyModuleFactory {
-    address public immutable basicImplementation;
+contract StrategyModuleFactory is Ownable, IStrategyModuleFactory {
+    address public basicImplementation;
 
     constructor(address _basicImplementation) {
-        require(
-            _basicImplementation != address(0),
-            "implementation cannot be zero"
-        );
+        if (_basicImplementation == address(0)) {
+            revert InvalidAddress();
+        }
         basicImplementation = _basicImplementation;
+    }
+
+    /**
+     * @dev See {IStrategyModuleFactory-updateImplementation}.
+     */
+    function updateImplementation(
+        address newImplementation
+    ) external onlyOwner {
+        if (newImplementation == address(0)) {
+            revert InvalidAddress();
+        }
+        basicImplementation = newImplementation;
     }
 
     /**
@@ -72,7 +84,10 @@ contract StrategyModuleFactory is IStrategyModuleFactory {
                 salt
             )
         }
-        require(address(proxy) != address(0), "Create2 call failed");
+
+        if (address(proxy) == address(0)) {
+            revert Create2Failed();
+        }
 
         assembly {
             let success := call(

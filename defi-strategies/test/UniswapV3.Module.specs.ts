@@ -396,6 +396,7 @@ describe("Uniswap V3", async () => {
       describe("Token only", function () {
         it("normal", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
+          now = (await waffle.provider.getBlock("latest")).timestamp + 100;
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
           const tokenIn = token.address;

@@ -59,12 +59,35 @@ describe("Strategy Factory", async () => {
       await expect(fac.deploy(AddressZero)).to.be.reverted;
     });
 
+    it("should revert to change implementation without admin access", async function () {
+      const { factory } = await setupTests();
+
+      await expect(
+        factory.connect(mockCaller).updateImplementation(AddressZero)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("should revert to change implementation with zero address", async function () {
+      const { factory } = await setupTests();
+
+      await expect(
+        factory.updateImplementation(AddressZero)
+      ).to.be.revertedWith("InvalidAddress");
+    });
+
     it("should revert to deploy strategy twice", async function () {
       const { factory } = await setupTests();
 
       await expect(
         factory.deployStrategyModule(deployer.address, deployer.address, 0)
-      ).to.be.revertedWith("Create2 call failed");
+      ).to.be.reverted;
+    });
+
+    it("should change implementation address", async function () {
+      const { factory } = await setupTests();
+
+      await factory.updateImplementation(mockCaller.address);
+      expect(await factory.basicImplementation()).to.be.eq(mockCaller.address);
     });
   });
 

@@ -15,6 +15,16 @@ interface IStrategyModuleFactory {
         uint256 index
     );
 
+    error InvalidAddress();
+    error Create2Failed();
+
+    /**
+     * @notice Change the address of implementation
+     * @dev needs admjin access
+     * @param newImplementation, address of new strategy module implementation to deploy
+     */
+    function updateImplementation(address newImplementation) external;
+
     /**
      * @notice Deploys module using create2 and points it to basicImplementation
      * @param beneficiary, address of beneficiary of this strategy module that receives fee factor of gas usage of each execStrategy call
