@@ -32,7 +32,8 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint24 fee,
         uint256 amountIn,
         uint256 amountOutMinimum,
-        uint160 sqrtPriceLimitX96
+        uint160 sqrtPriceLimitX96,
+        uint256 deadline
     ) public payable returns (uint256 amountOut) {
         // Build params for router call
         ISwapRouter.ExactInputSingleParams memory params;
@@ -42,6 +43,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.amountIn = _getBalance(address(0), amountIn);
         params.amountOutMinimum = amountOutMinimum;
         params.sqrtPriceLimitX96 = sqrtPriceLimitX96;
+        params.deadline = deadline;
 
         amountOut = _exactInputSingle(params.amountIn, params);
     }
@@ -51,7 +53,8 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint24 fee,
         uint256 amountIn,
         uint256 amountOutMinimum,
-        uint160 sqrtPriceLimitX96
+        uint160 sqrtPriceLimitX96,
+        uint256 deadline
     ) public payable returns (uint256 amountOut) {
         // Build params for router call
         ISwapRouter.ExactInputSingleParams memory params;
@@ -61,6 +64,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.amountIn = _getBalance(tokenIn, amountIn);
         params.amountOutMinimum = amountOutMinimum;
         params.sqrtPriceLimitX96 = sqrtPriceLimitX96;
+        params.deadline = deadline;
 
         // Approve token
         _tokenApprove(tokenIn, address(router), params.amountIn);
@@ -75,7 +79,8 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint24 fee,
         uint256 amountIn,
         uint256 amountOutMinimum,
-        uint160 sqrtPriceLimitX96
+        uint160 sqrtPriceLimitX96,
+        uint256 deadline
     ) public payable returns (uint256 amountOut) {
         // Build params for router call
         ISwapRouter.ExactInputSingleParams memory params;
@@ -85,6 +90,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.amountIn = _getBalance(tokenIn, amountIn);
         params.amountOutMinimum = amountOutMinimum;
         params.sqrtPriceLimitX96 = sqrtPriceLimitX96;
+        params.deadline = deadline;
 
         // Approve token
         _tokenApprove(tokenIn, address(router), params.amountIn);
@@ -95,7 +101,8 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
     function exactInputFromEther(
         bytes memory path,
         uint256 amountIn,
-        uint256 amountOutMinimum
+        uint256 amountOutMinimum,
+        uint256 deadline
     ) public payable returns (uint256 amountOut) {
         // Extract tokenIn and tokenOut
         address tokenIn = _getFirstToken(path);
@@ -110,6 +117,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.path = path;
         params.amountIn = _getBalance(address(0), amountIn);
         params.amountOutMinimum = amountOutMinimum;
+        params.deadline = deadline;
 
         amountOut = _exactInput(params.amountIn, params);
     }
@@ -117,7 +125,8 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
     function exactInputToEther(
         bytes memory path,
         uint256 amountIn,
-        uint256 amountOutMinimum
+        uint256 amountOutMinimum,
+        uint256 deadline
     ) public payable returns (uint256 amountOut) {
         // Extract tokenIn and tokenOut
         address tokenIn = _getFirstToken(path);
@@ -133,6 +142,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.path = path;
         params.amountIn = _getBalance(tokenIn, amountIn);
         params.amountOutMinimum = amountOutMinimum;
+        params.deadline = deadline;
 
         // Approve token
         _tokenApprove(tokenIn, address(router), params.amountIn);
@@ -144,7 +154,8 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
     function exactInput(
         bytes memory path,
         uint256 amountIn,
-        uint256 amountOutMinimum
+        uint256 amountOutMinimum,
+        uint256 deadline
     ) public payable returns (uint256 amountOut) {
         // Extract tokenIn
         address tokenIn = _getFirstToken(path);
@@ -153,6 +164,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.path = path;
         params.amountIn = _getBalance(tokenIn, amountIn);
         params.amountOutMinimum = amountOutMinimum;
+        params.deadline = deadline;
 
         // Approve token
         _tokenApprove(tokenIn, address(router), params.amountIn);
@@ -165,7 +177,8 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint24 fee,
         uint256 amountOut,
         uint256 amountInMaximum,
-        uint160 sqrtPriceLimitX96
+        uint160 sqrtPriceLimitX96,
+        uint256 deadline
     ) public payable returns (uint256 amountIn) {
         // Build params for router call
         ISwapRouter.ExactOutputSingleParams memory params;
@@ -173,6 +186,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.tokenOut = tokenOut;
         params.fee = fee;
         params.amountOut = amountOut;
+        params.deadline = deadline;
         // if amount == type(uint256).max return balance of Proxy
         params.amountInMaximum = _getBalance(address(0), amountInMaximum);
         params.sqrtPriceLimitX96 = sqrtPriceLimitX96;
@@ -186,7 +200,8 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint24 fee,
         uint256 amountOut,
         uint256 amountInMaximum,
-        uint160 sqrtPriceLimitX96
+        uint160 sqrtPriceLimitX96,
+        uint256 deadline
     ) public payable returns (uint256 amountIn) {
         // Build params for router call
         ISwapRouter.ExactOutputSingleParams memory params;
@@ -197,6 +212,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         // if amount == type(uint256).max return balance of Proxy
         params.amountInMaximum = _getBalance(tokenIn, amountInMaximum);
         params.sqrtPriceLimitX96 = sqrtPriceLimitX96;
+        params.deadline = deadline;
 
         // Approve token
         _tokenApprove(params.tokenIn, address(router), params.amountInMaximum);
@@ -211,7 +227,8 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint24 fee,
         uint256 amountOut,
         uint256 amountInMaximum,
-        uint160 sqrtPriceLimitX96
+        uint160 sqrtPriceLimitX96,
+        uint256 deadline
     ) public payable returns (uint256 amountIn) {
         // Build params for router call
         ISwapRouter.ExactOutputSingleParams memory params;
@@ -222,6 +239,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         // if amount == type(uint256).max return balance of Proxy
         params.amountInMaximum = _getBalance(tokenIn, amountInMaximum);
         params.sqrtPriceLimitX96 = sqrtPriceLimitX96;
+        params.deadline = deadline;
 
         // Approve token
         _tokenApprove(params.tokenIn, address(router), params.amountInMaximum);
@@ -232,7 +250,8 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
     function exactOutputFromEther(
         bytes memory path,
         uint256 amountOut,
-        uint256 amountInMaximum
+        uint256 amountInMaximum,
+        uint256 deadline
     ) public payable returns (uint256 amountIn) {
         // Extract tokenIn
         // Note that the first token is tokenOut in exactOutput functions, vice versa
@@ -248,6 +267,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.path = path;
         params.amountOut = amountOut;
         params.amountInMaximum = _getBalance(address(0), amountInMaximum);
+        params.deadline = deadline;
 
         amountIn = _exactOutput(params.amountInMaximum, params);
         router.refundETH();
@@ -256,7 +276,8 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
     function exactOutputToEther(
         bytes memory path,
         uint256 amountOut,
-        uint256 amountInMaximum
+        uint256 amountInMaximum,
+        uint256 deadline
     ) public payable returns (uint256 amountIn) {
         // Extract tokenIn and tokenOut
         // Note that the first token is tokenOut in exactOutput functions, vice versa
@@ -274,6 +295,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.amountOut = amountOut;
         // if amount == type(uint256).max return balance of Proxy
         params.amountInMaximum = _getBalance(tokenIn, amountInMaximum);
+        params.deadline = deadline;
 
         // Approve token
         _tokenApprove(tokenIn, address(router), params.amountInMaximum);
@@ -285,7 +307,8 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
     function exactOutput(
         bytes memory path,
         uint256 amountOut,
-        uint256 amountInMaximum
+        uint256 amountInMaximum,
+        uint256 deadline
     ) public payable returns (uint256 amountIn) {
         // Extract tokenIn
         // Note that the first token is tokenOut in exactOutput functions, vice versa
@@ -296,6 +319,7 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.amountOut = amountOut;
         // if amount == type(uint256).max return balance of Proxy
         params.amountInMaximum = _getBalance(tokenIn, amountInMaximum);
+        params.deadline = deadline;
 
         // Approve token
         _tokenApprove(tokenIn, address(router), params.amountInMaximum);
@@ -317,7 +341,6 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint256 value,
         ISwapRouter.ExactInputSingleParams memory params
     ) internal returns (uint256) {
-        params.deadline = block.timestamp;
         params.recipient = address(this);
 
         try router.exactInputSingle{value: value}(params) returns (
@@ -335,7 +358,6 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint256 value,
         ISwapRouter.ExactInputParams memory params
     ) internal returns (uint256) {
-        params.deadline = block.timestamp;
         params.recipient = address(this);
 
         try router.exactInput{value: value}(params) returns (
@@ -353,7 +375,6 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint256 value,
         ISwapRouter.ExactOutputSingleParams memory params
     ) internal returns (uint256) {
-        params.deadline = block.timestamp;
         params.recipient = address(this);
 
         try router.exactOutputSingle{value: value}(params) returns (
@@ -371,7 +392,6 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         uint256 value,
         ISwapRouter.ExactOutputParams memory params
     ) internal returns (uint256) {
-        params.deadline = block.timestamp;
         params.recipient = address(this);
 
         try router.exactOutput{value: value}(params) returns (

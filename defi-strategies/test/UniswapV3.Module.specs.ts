@@ -43,6 +43,7 @@ describe("Uniswap V3", async () => {
   let wethProviderAddress: any;
   let fee: any;
   const gasPrice = ethers.utils.parseUnits("30", 9);
+  let now;
 
   const encodePath = (path: any, fees: any) => {
     if (path.length !== fees.length + 1) {
@@ -159,6 +160,7 @@ describe("Uniswap V3", async () => {
       describe("Ether in", function () {
         it("normal [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
+          now = (await waffle.provider.getBlock("latest")).timestamp + 100;
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
           const tokenIn = WrappedETH.address;
@@ -178,8 +180,8 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputSingleFromEther(address,uint24,uint256,uint256,uint160)",
-            [tokenOut, fee2, amountIn, amountOutMinimum, sqrtPriceLimitX96]
+            "exactInputSingleFromEther(address,uint24,uint256,uint256,uint160,uint256)",
+            [tokenOut, fee2, amountIn, amountOutMinimum, sqrtPriceLimitX96, now]
           );
 
           const { transaction, signature } =
@@ -254,8 +256,8 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputSingleToEther(address,uint24,uint256,uint256,uint160)",
-            [tokenIn, fee2, amountIn, amountOutMinimum, sqrtPriceLimitX96]
+            "exactInputSingleToEther(address,uint24,uint256,uint256,uint160,uint256)",
+            [tokenIn, fee2, amountIn, amountOutMinimum, sqrtPriceLimitX96, now]
           );
 
           const { transaction, signature } =
@@ -330,8 +332,15 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputSingleToEther(address,uint24,uint256,uint256,uint160)",
-            [tokenIn, fee2, MAX_UINT256, amountOutMinimum, sqrtPriceLimitX96]
+            "exactInputSingleToEther(address,uint24,uint256,uint256,uint160,uint256)",
+            [
+              tokenIn,
+              fee2,
+              MAX_UINT256,
+              amountOutMinimum,
+              sqrtPriceLimitX96,
+              now,
+            ]
           );
 
           const { transaction, signature } =
@@ -410,7 +419,7 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputSingle(address,address,uint24,uint256,uint256,uint160)",
+            "exactInputSingle(address,address,uint24,uint256,uint256,uint160,uint256)",
             [
               tokenIn,
               tokenOut,
@@ -418,6 +427,7 @@ describe("Uniswap V3", async () => {
               amountIn,
               amountOutMinimum,
               sqrtPriceLimitX96,
+              now,
             ]
           );
 
@@ -493,7 +503,7 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputSingle(address,address,uint24,uint256,uint256,uint160)",
+            "exactInputSingle(address,address,uint24,uint256,uint256,uint160,uint256)",
             [
               tokenIn,
               tokenOut,
@@ -501,6 +511,7 @@ describe("Uniswap V3", async () => {
               MAX_UINT256,
               amountOutMinimum,
               sqrtPriceLimitX96,
+              now,
             ]
           );
 
@@ -580,8 +591,8 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputFromEther(bytes,uint256,uint256)",
-            [path, amountIn, amountOutMinimum]
+            "exactInputFromEther(bytes,uint256,uint256,uint256)",
+            [path, amountIn, amountOutMinimum, now]
           );
 
           const { transaction, signature } =
@@ -658,8 +669,8 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputToEther(bytes,uint256,uint256)",
-            [path, amountIn, amountOutMinimum]
+            "exactInputToEther(bytes,uint256,uint256,uint256)",
+            [path, amountIn, amountOutMinimum, now]
           );
 
           const { transaction, signature } =
@@ -736,8 +747,8 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputToEther(bytes,uint256,uint256)",
-            [path, MAX_UINT256, amountOutMinimum]
+            "exactInputToEther(bytes,uint256,uint256,uint256)",
+            [path, MAX_UINT256, amountOutMinimum, now]
           );
 
           const { transaction, signature } =
@@ -817,11 +828,10 @@ describe("Uniswap V3", async () => {
 
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
-          ).interface.encodeFunctionData("exactInput(bytes,uint256,uint256)", [
-            path,
-            amountIn,
-            amountOutMinimum,
-          ]);
+          ).interface.encodeFunctionData(
+            "exactInput(bytes,uint256,uint256,uint256)",
+            [path, amountIn, amountOutMinimum, now]
+          );
 
           const { transaction, signature } =
             await buildEcdsaModuleAuthorizedStrategyTx(
@@ -896,11 +906,10 @@ describe("Uniswap V3", async () => {
 
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
-          ).interface.encodeFunctionData("exactInput(bytes,uint256,uint256)", [
-            path,
-            MAX_UINT256,
-            amountOutMinimum,
-          ]);
+          ).interface.encodeFunctionData(
+            "exactInput(bytes,uint256,uint256,uint256)",
+            [path, MAX_UINT256, amountOutMinimum, now]
+          );
 
           const { transaction, signature } =
             await buildEcdsaModuleAuthorizedStrategyTx(
@@ -977,8 +986,15 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputSingleFromEther(address,uint24,uint256,uint256,uint160)",
-              [tokenOut, fee2, amountOut, amountInMaximum, sqrtPriceLimitX96]
+              "exactOutputSingleFromEther(address,uint24,uint256,uint256,uint160,uint256)",
+              [
+                tokenOut,
+                fee2,
+                amountOut,
+                amountInMaximum,
+                sqrtPriceLimitX96,
+                now,
+              ]
             );
 
             const { transaction, signature } =
@@ -1053,8 +1069,15 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputSingleToEther(address,uint24,uint256,uint256,uint160)",
-              [tokenIn, fee2, amountOut, amountInMaximum, sqrtPriceLimitX96]
+              "exactOutputSingleToEther(address,uint24,uint256,uint256,uint160,uint256)",
+              [
+                tokenIn,
+                fee2,
+                amountOut,
+                amountInMaximum,
+                sqrtPriceLimitX96,
+                now,
+              ]
             );
 
             const { transaction, signature } =
@@ -1131,8 +1154,8 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputSingleToEther(address,uint24,uint256,uint256,uint160)",
-              [tokenIn, fee2, amountOut, MAX_UINT256, sqrtPriceLimitX96]
+              "exactOutputSingleToEther(address,uint24,uint256,uint256,uint160,uint256)",
+              [tokenIn, fee2, amountOut, MAX_UINT256, sqrtPriceLimitX96, now]
             );
 
             const { transaction, signature } =
@@ -1211,7 +1234,7 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputSingle(address,address,uint24,uint256,uint256,uint160)",
+              "exactOutputSingle(address,address,uint24,uint256,uint256,uint160,uint256)",
               [
                 tokenIn,
                 tokenOut,
@@ -1219,6 +1242,7 @@ describe("Uniswap V3", async () => {
                 amountOut,
                 amountInMaximum,
                 sqrtPriceLimitX96,
+                now,
               ]
             );
 
@@ -1296,7 +1320,7 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputSingle(address,address,uint24,uint256,uint256,uint160)",
+              "exactOutputSingle(address,address,uint24,uint256,uint256,uint160,uint256)",
               [
                 tokenIn,
                 tokenOut,
@@ -1304,6 +1328,7 @@ describe("Uniswap V3", async () => {
                 amountOut,
                 MAX_UINT256,
                 sqrtPriceLimitX96,
+                now,
               ]
             );
 
@@ -1382,8 +1407,8 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputFromEther(bytes,uint256,uint256)",
-              [path, amountOut, amountInMaximum]
+              "exactOutputFromEther(bytes,uint256,uint256,uint256)",
+              [path, amountOut, amountInMaximum, now]
             );
 
             const { transaction, signature } =
@@ -1458,8 +1483,8 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputToEther(bytes,uint256,uint256)",
-              [path, amountOut, amountInMaximum]
+              "exactOutputToEther(bytes,uint256,uint256,uint256)",
+              [path, amountOut, amountInMaximum, now]
             );
 
             const { transaction, signature } =
@@ -1538,8 +1563,8 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputToEther(bytes,uint256,uint256)",
-              [path, amountOut, MAX_UINT256]
+              "exactOutputToEther(bytes,uint256,uint256,uint256)",
+              [path, amountOut, MAX_UINT256, now]
             );
 
             const { transaction, signature } =
@@ -1620,8 +1645,8 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutput(bytes,uint256,uint256)",
-              [path, amountOut, amountInMaximum]
+              "exactOutput(bytes,uint256,uint256,uint256)",
+              [path, amountOut, amountInMaximum, now]
             );
 
             const { transaction, signature } =
@@ -1700,8 +1725,8 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutput(bytes,uint256,uint256)",
-              [path, amountOut, MAX_UINT256]
+              "exactOutput(bytes,uint256,uint256,uint256)",
+              [path, amountOut, MAX_UINT256, now]
             );
 
             const { transaction, signature } =
