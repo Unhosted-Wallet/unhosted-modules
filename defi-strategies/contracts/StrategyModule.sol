@@ -5,7 +5,6 @@ import {ISignatureValidator, ISignatureValidatorConstants} from "contracts/inter
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IExecFromModule, IStrategyModule, Enum} from "contracts/interfaces/IStrategyModule.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 /**
  * @title Strategy module for Biconomy Smart Accounts.
@@ -32,11 +31,9 @@ contract StrategyModule is
         0x06d4deb91a5dc73a3ea344ed05631460315e2109778b250fdd941893ee92bec8;
 
     // solhint-disable-next-line
-    uint16 internal constant _feeFactor = 5000; // 50%
+    uint16 internal constant _gasFactor = 5000; // 50%
 
     uint256 private immutable CHAIN_ID;
-    // solhint-disable-next-line
-    address internal immutable _gasFeed;
 
     mapping(address => uint256) public nonces;
 
@@ -49,12 +46,11 @@ contract StrategyModule is
     error AlreadyInitialized();
     error AddressCanNotBeZero();
     error NotAuthorized();
-    error FeeTransferFailed(uint256);
+    error TransferFailed(uint256);
     error RevertEstimation(uint256);
 
-    constructor(address gasFeed_) {
+    constructor() {
         CHAIN_ID = block.chainid;
-        _gasFeed = gasFeed_;
     }
 
     receive() external payable {}
@@ -83,7 +79,7 @@ contract StrategyModule is
         public
         virtual
         nonReentrant
-        returns (uint256 fee, bool executed, bytes memory returnData)
+        returns (uint256 gasUsed, bool executed, bytes memory returnData)
     {
         bytes32 txHash;
 
@@ -114,29 +110,25 @@ contract StrategyModule is
                     _tx.data,
                     Enum.Operation.DelegateCall
                 );
-            fee = (startGas - gasleft());
-
-            (, int256 answer, , , ) = AggregatorV3Interface(_gasFeed)
-                .latestRoundData();
-            fee = (fee * uint256(answer) * _feeFactor) / 1e4;
+            gasUsed = ((startGas - gasleft()) * _gasFactor) / 1e4;
 
             bool success = IExecFromModule(smartAccount)
                 .execTransactionFromModule(
                     address(this),
-                    fee,
+                    gasUsed * tx.gasprice,
                     "",
                     Enum.Operation.Call
                 );
             if (!success) {
-                revert FeeTransferFailed(fee);
+                revert TransferFailed(gasUsed);
             }
         }
     }
 
     /**
-     * @dev See {IStrategyModule-requiredTxFee}.
+     * @dev See {IStrategyModule-requiredTxGas}.
      */
-    function requiredTxFee(
+    function requiredTxGas(
         address smartAccount,
         StrategyTransaction memory _tx
     ) public {
@@ -148,13 +140,9 @@ contract StrategyModule is
             _tx.data,
             Enum.Operation.DelegateCall
         );
-        uint256 fee = (startGas - gasleft());
+        uint256 gasUsed = (startGas - gasleft());
 
-        (, int256 answer, , , ) = AggregatorV3Interface(_gasFeed)
-            .latestRoundData();
-
-        fee = (fee * uint256(answer) * _feeFactor) / 1e4;
-        revert RevertEstimation(fee);
+        revert RevertEstimation((gasUsed * _gasFactor) / 1e4);
     }
 
     /**

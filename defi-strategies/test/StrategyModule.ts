@@ -10,18 +10,13 @@ describe("Strategy Factory", async () => {
   let strategyModule: Contract;
   let implementation: Contract;
   let strategyFactory: Contract;
-  let mockFeed: Contract;
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
 
-    mockFeed = await (
-      await ethers.getContractFactory("MockAggregatorV3")
-    ).deploy("20000000000");
-
     implementation = await (
       await ethers.getContractFactory("StrategyModule")
-    ).deploy(mockFeed.address);
+    ).deploy();
 
     strategyFactory = await (
       await ethers.getContractFactory("StrategyModuleFactory")
@@ -114,8 +109,8 @@ describe("Strategy Factory", async () => {
 
     it("should supports IStrategyModule interface by ERC165", async function () {
       const { factory, strategyModule } = await setupTests();
-      // 0xb626f145 IStrategyModule interface id
-      expect(await strategyModule.supportsInterface(0xb626f145)).to.be.eq(true);
+      // 0xffe2fc80 IStrategyModule interface id
+      expect(await strategyModule.supportsInterface(0xffe2fc80)).to.be.eq(true);
       expect(await strategyModule.supportsInterface(0xb626f144)).to.be.eq(
         false
       );

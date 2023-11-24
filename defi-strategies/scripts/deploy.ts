@@ -1,21 +1,12 @@
 import { ethers } from "hardhat";
 import {
-  GOERLI_GAS_PRICE_FEED,
   GOERLI_WRAPPED_NATIVE_UNIV3,
-  WRAPPED_NATIVE_TOKEN,
 } from "../test/utils/constants_eth";
-import {
-  MUMBAI_GAS_PRICE_FEED,
-  MUMBAI_WRAPPED_NATIVE_UNIV3,
-} from "../test/utils/constants_poly";
 
 async function main() {
-  const FeedFactory = await ethers.getContractFactory("MockAggregatorV3");
-  const feed = await FeedFactory.deploy(20000000000);
-  console.log(feed.address);
 
   const StrategyFactory = await ethers.getContractFactory("StrategyModule");
-  const strategy = await StrategyFactory.deploy(GOERLI_GAS_PRICE_FEED);
+  const strategy = await StrategyFactory.deploy();
 
   console.log(strategy.address);
 

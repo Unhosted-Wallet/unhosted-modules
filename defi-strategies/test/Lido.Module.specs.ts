@@ -29,6 +29,7 @@ describe("Lido Finance", async () => {
   let lidoHandler: Contract;
   let stETH: Contract;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
@@ -132,10 +133,10 @@ describe("Lido Finance", async () => {
       const beforeExecBalance = await stETH.balanceOf(userSA.address);
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const execRes = await callExecStrategy(

@@ -49,6 +49,7 @@ describe("AaveV2 Borrow", async () => {
   let providerAddress: any;
   let wethProviderAddress: any;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
@@ -274,10 +275,10 @@ describe("AaveV2 Borrow", async () => {
       );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       await strategyModule.execStrategy(userSA.address, transaction, signature);
@@ -302,7 +303,7 @@ describe("AaveV2 Borrow", async () => {
       expect(await debtToken.balanceOf(strategyModule.address)).to.be.eq(0);
     });
 
-    it("Borrow eth", async function () {
+    it("Borrow eth [ @skip-on-coverage ]", async function () {
       const { userSA, ecdsaModule, errAbi } = await setupTests();
 
       await token
@@ -342,10 +343,10 @@ describe("AaveV2 Borrow", async () => {
       );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       fee = await callExecStrategyReturnFee(strategyModule, [
@@ -430,10 +431,10 @@ describe("AaveV2 Borrow", async () => {
       const debtTokenUserBefore = await debtToken.balanceOf(userSA.address);
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       await strategyModule.execStrategy(userSA.address, transaction, signature);
@@ -495,10 +496,10 @@ describe("AaveV2 Borrow", async () => {
       );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       await strategyModule.execStrategy(userSA.address, transaction, signature);
@@ -523,7 +524,7 @@ describe("AaveV2 Borrow", async () => {
       expect(await debtToken.balanceOf(strategyModule.address)).to.be.eq(0);
     });
 
-    it("Borrow eth", async function () {
+    it("Borrow eth [ @skip-on-coverage ]", async function () {
       const { userSA, ecdsaModule, errAbi } = await setupTests();
 
       await token
@@ -563,10 +564,10 @@ describe("AaveV2 Borrow", async () => {
       );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       fee = await callExecStrategyReturnFee(strategyModule, [

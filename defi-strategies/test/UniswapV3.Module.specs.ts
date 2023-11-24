@@ -41,6 +41,7 @@ describe("Uniswap V3", async () => {
   let providerAddress: any;
   let wethProviderAddress: any;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
 
   const encodePath = (path: any, fees: any) => {
     if (path.length !== fees.length + 1) {
@@ -155,7 +156,7 @@ describe("Uniswap V3", async () => {
   describe("Exact input", function () {
     describe("Single path", function () {
       describe("Ether in", function () {
-        it("normal", async function () {
+        it("normal [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
@@ -196,10 +197,10 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
@@ -227,7 +228,7 @@ describe("Uniswap V3", async () => {
       });
 
       describe("Ether out", function () {
-        it("normal", async function () {
+        it("normal [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
@@ -274,10 +275,10 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
@@ -303,7 +304,7 @@ describe("Uniswap V3", async () => {
           expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
         });
 
-        it("max amount", async function () {
+        it("max amount [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
@@ -350,10 +351,10 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
@@ -437,10 +438,10 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
@@ -520,10 +521,10 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
@@ -555,7 +556,7 @@ describe("Uniswap V3", async () => {
 
     describe("Multi path", function () {
       describe("Ether in", function () {
-        it("normal", async function () {
+        it("normal [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
@@ -598,10 +599,10 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
@@ -629,7 +630,7 @@ describe("Uniswap V3", async () => {
       });
 
       describe("Ether out", function () {
-        it("normal", async function () {
+        it("normal [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
@@ -678,10 +679,10 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
@@ -707,7 +708,7 @@ describe("Uniswap V3", async () => {
           expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
         });
 
-        it("max amount", async function () {
+        it("max amount [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
@@ -756,10 +757,10 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
@@ -839,10 +840,10 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
@@ -918,10 +919,10 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
@@ -954,7 +955,7 @@ describe("Uniswap V3", async () => {
     describe("Exact output", function () {
       describe("Single path", function () {
         describe("Ether in", function () {
-          it("normal", async function () {
+          it("normal [ @skip-on-coverage ]", async function () {
             const { userSA, ecdsaModule, errAbi } = await setupTests();
             const value = ethers.utils.parseEther("1");
             const handler = uniV3handler.address;
@@ -995,10 +996,10 @@ describe("Uniswap V3", async () => {
             );
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
@@ -1026,7 +1027,7 @@ describe("Uniswap V3", async () => {
         });
 
         describe("Ether out", function () {
-          it("normal", async function () {
+          it("normal [ @skip-on-coverage ]", async function () {
             const { userSA, ecdsaModule, errAbi } = await setupTests();
             const value = ethers.utils.parseEther("1");
             const handler = uniV3handler.address;
@@ -1073,10 +1074,10 @@ describe("Uniswap V3", async () => {
             const beforeExecBalance = await token.balanceOf(userSA.address);
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
@@ -1104,7 +1105,7 @@ describe("Uniswap V3", async () => {
             expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
           });
 
-          it("max amount", async function () {
+          it("max amount [ @skip-on-coverage ]", async function () {
             const { userSA, ecdsaModule, errAbi } = await setupTests();
             const value = ethers.utils.parseEther("1");
             const handler = uniV3handler.address;
@@ -1151,10 +1152,10 @@ describe("Uniswap V3", async () => {
             const beforeExecBalance = await token.balanceOf(userSA.address);
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
@@ -1238,10 +1239,10 @@ describe("Uniswap V3", async () => {
             const beforeExecBalance = await token.balanceOf(userSA.address);
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
@@ -1323,10 +1324,10 @@ describe("Uniswap V3", async () => {
             const beforeExecBalance = await token.balanceOf(userSA.address);
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
@@ -1356,8 +1357,8 @@ describe("Uniswap V3", async () => {
         });
       });
       describe("Multi path", function () {
-        describe("Ether in", function () {
-          it("normal", async function () {
+        describe("Ether in ", function () {
+          it("normal [ @skip-on-coverage ]", async function () {
             const { userSA, ecdsaModule, errAbi } = await setupTests();
             const value = ethers.utils.parseEther("1");
             const handler = uniV3handler.address;
@@ -1400,10 +1401,10 @@ describe("Uniswap V3", async () => {
             );
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
@@ -1429,7 +1430,7 @@ describe("Uniswap V3", async () => {
         });
 
         describe("Ether out", function () {
-          it("normal", async function () {
+          it("normal [ @skip-on-coverage ]", async function () {
             const { userSA, ecdsaModule, errAbi } = await setupTests();
             const value = ethers.utils.parseEther("1");
             const handler = uniV3handler.address;
@@ -1478,10 +1479,10 @@ describe("Uniswap V3", async () => {
             );
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
@@ -1509,7 +1510,7 @@ describe("Uniswap V3", async () => {
             expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
           });
 
-          it("max amount", async function () {
+          it("max amount [ @skip-on-coverage ]", async function () {
             const { userSA, ecdsaModule, errAbi } = await setupTests();
             const value = ethers.utils.parseEther("1");
             const handler = uniV3handler.address;
@@ -1558,10 +1559,10 @@ describe("Uniswap V3", async () => {
             );
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
@@ -1640,10 +1641,10 @@ describe("Uniswap V3", async () => {
             );
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
@@ -1720,10 +1721,10 @@ describe("Uniswap V3", async () => {
             );
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(

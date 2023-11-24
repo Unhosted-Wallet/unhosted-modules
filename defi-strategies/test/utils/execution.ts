@@ -154,7 +154,7 @@ export const callExecStrategy = async (
 
   await contract.execStrategy(params[0], params[1], params[2]);
 
-  return [decodedResult[0], result[0]];
+  return [decodedResult[0], result[0].mul(ethers.utils.parseUnits("30", 9))];
 };
 
 export const callExecStrategyReturnFee = async (
@@ -175,7 +175,7 @@ export const callExecStrategyReturnFee = async (
 
   await contract.execStrategy(params[0], params[1], params[2]);
 
-  return result[0];
+  return result[0].mul(ethers.utils.parseUnits("30", 9));
 };
 
 export const calculateSafeDomainSeparator = (

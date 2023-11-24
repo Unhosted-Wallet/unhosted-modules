@@ -75,11 +75,11 @@ interface IStrategyModule {
     /**
      * @dev Allows to estimate a transaction.
      * @dev This method is for estimation only, it will always revert and encode the result in the revert data.
-     * @dev Call this method to get an estimate of the execTransactionFromModule costs that are deducted with `execStrategy`
-     * @param smartAccount, address of biconomy smart account to execute strategy for
+     * @dev Call this method to get an estimate of the execTransactionFromModule gas costs that are deducted with `execStrategy`
+     * @param smartAccount, address of biconomy smart account that execute tx
      * @param _tx, StrategyTransaction structure including amount if value to send to handler, gas and the arbitrary data to call on handler
      */
-    function requiredTxFee(
+    function requiredTxGas(
         address smartAccount,
         StrategyTransaction memory _tx
     ) external;

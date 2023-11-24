@@ -47,6 +47,7 @@ describe("AaveV2 Repay", async () => {
   let providerAddress: any;
   let wethProviderAddress: any;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
 
   const borrow = async (depositAmount, rateMode) => {
     const { userSA, ecdsaModule, errAbi } = await setupTests();
@@ -81,10 +82,10 @@ describe("AaveV2 Repay", async () => {
       );
 
     try {
-      await strategyModule.requiredTxFee(userSA.address, transaction);
+      await strategyModule.requiredTxGas(userSA.address, transaction);
     } catch (error) {
       fee = decodeError(error, errAbi).args;
-      fee = fee[0];
+      fee = fee[0].mul(gasPrice);
     }
 
     await strategyModule.execStrategy(userSA.address, transaction, signature);
@@ -241,10 +242,10 @@ describe("AaveV2 Repay", async () => {
         );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const execRes = await callExecStrategy(
@@ -277,7 +278,7 @@ describe("AaveV2 Repay", async () => {
       );
     });
 
-    it("Partial by eth", async function () {
+    it("Partial by eth [ @skip-on-coverage ]", async function () {
       const { borrowAmount, userSA, ecdsaModule, errAbi } = await borrow(
         depositAmount,
         rateMode
@@ -305,10 +306,10 @@ describe("AaveV2 Repay", async () => {
         );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const beforeExecBalance = await waffle.provider.getBalance(
@@ -348,7 +349,7 @@ describe("AaveV2 Repay", async () => {
       );
     });
 
-    it("Whole", async function () {
+    it("Whole [ @skip-on-coverage ]", async function () {
       const { borrowAmount, userSA, ecdsaModule, errAbi } = await borrow(
         depositAmount,
         rateMode
@@ -383,10 +384,10 @@ describe("AaveV2 Repay", async () => {
         );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const beforeExecBalance = await waffle.provider.getBalance(
@@ -457,10 +458,10 @@ describe("AaveV2 Repay", async () => {
         );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const beforeExecBalance = await WrappedETH.balanceOf(userSA.address);
@@ -535,10 +536,10 @@ describe("AaveV2 Repay", async () => {
         );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const execRes = await callExecStrategy(
@@ -571,7 +572,7 @@ describe("AaveV2 Repay", async () => {
       );
     });
 
-    it("Partial by eth", async function () {
+    it("Partial by eth [ @skip-on-coverage ]", async function () {
       const { borrowAmount, userSA, ecdsaModule, errAbi } = await borrow(
         depositAmount,
         rateMode
@@ -599,10 +600,10 @@ describe("AaveV2 Repay", async () => {
         );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const beforeExecBalance = await waffle.provider.getBalance(
@@ -642,7 +643,7 @@ describe("AaveV2 Repay", async () => {
       );
     });
 
-    it("Whole", async function () {
+    it("Whole [ @skip-on-coverage ]", async function () {
       const { borrowAmount, userSA, ecdsaModule, errAbi } = await borrow(
         depositAmount,
         rateMode
@@ -677,10 +678,10 @@ describe("AaveV2 Repay", async () => {
         );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const beforeExecBalance = await waffle.provider.getBalance(
@@ -750,10 +751,10 @@ describe("AaveV2 Repay", async () => {
         );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const beforeExecBalance = await WrappedETH.balanceOf(userSA.address);

@@ -43,6 +43,7 @@ describe("Compound V3 supply", async () => {
   let providerAddress: any;
   let wethProviderAddress: any;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
@@ -183,10 +184,10 @@ describe("Compound V3 supply", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         await strategyModule.execStrategy(
@@ -233,10 +234,10 @@ describe("Compound V3 supply", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         await strategyModule.execStrategy(
@@ -282,10 +283,10 @@ describe("Compound V3 supply", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         await strategyModule.execStrategy(
@@ -344,10 +345,10 @@ describe("Compound V3 supply", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         await strategyModule.execStrategy(
@@ -391,10 +392,10 @@ describe("Compound V3 supply", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         await strategyModule.execStrategy(
@@ -455,10 +456,10 @@ describe("Compound V3 supply", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         await strategyModule.execStrategy(
@@ -520,10 +521,10 @@ describe("Compound V3 supply", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         await strategyModule.execStrategy(
@@ -590,10 +591,10 @@ describe("Compound V3 supply", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         await strategyModule.execStrategy(

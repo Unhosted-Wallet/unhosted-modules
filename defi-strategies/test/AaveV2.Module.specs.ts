@@ -43,6 +43,7 @@ describe("AaveV2 Deposit & Withdraw", async () => {
   let providerAddress: any;
   let wethProviderAddress: any;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
@@ -158,7 +159,7 @@ describe("AaveV2 Deposit & Withdraw", async () => {
   });
 
   describe("Deposit", function () {
-    it("deposit ETH normal", async function () {
+    it("deposit ETH normal [ @skip-on-coverage ]", async function () {
       const { userSA, ecdsaModule, errAbi } = await setupTests();
       const value = ethers.utils.parseEther("1");
       const handler = aaveV2handler.address;
@@ -182,10 +183,10 @@ describe("AaveV2 Deposit & Withdraw", async () => {
       );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const execRes = await callExecStrategy(
@@ -209,7 +210,7 @@ describe("AaveV2 Deposit & Withdraw", async () => {
       expect(await AWrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
     });
 
-    it("deposit token normal", async function () {
+    it("deposit token normal [ @skip-on-coverage ]", async function () {
       const { userSA, ecdsaModule, errAbi } = await setupTests();
       const value = ethers.utils.parseEther("1");
       const handler = aaveV2handler.address;
@@ -235,10 +236,10 @@ describe("AaveV2 Deposit & Withdraw", async () => {
         );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const beforeExecBalance = await token.balanceOf(userSA.address);
@@ -308,10 +309,10 @@ describe("AaveV2 Deposit & Withdraw", async () => {
         );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const beforeExecBalance = await token.balanceOf(userSA.address);
@@ -348,7 +349,7 @@ describe("AaveV2 Deposit & Withdraw", async () => {
   describe("Withdraw", function () {
     let depositAmount = ethers.utils.parseEther("5");
 
-    it("withdraw ETH partial", async function () {
+    it("withdraw ETH partial [ @skip-on-coverage ]", async function () {
       const { userSA, ecdsaModule, errAbi } = await setupTests();
       await WrappedETH.connect(wethProviderAddress).approve(
         lendingPool.address,
@@ -379,10 +380,10 @@ describe("AaveV2 Deposit & Withdraw", async () => {
         );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const beforeExecBalance = await AWrappedETH.balanceOf(userSA.address);
@@ -446,10 +447,10 @@ describe("AaveV2 Deposit & Withdraw", async () => {
         );
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const beforeExecBalance = await aToken.balanceOf(userSA.address);
@@ -515,10 +516,10 @@ describe("AaveV2 Deposit & Withdraw", async () => {
       const beforeExecToken = await token.balanceOf(userSA.address);
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
       const execRes = await callExecStrategy(

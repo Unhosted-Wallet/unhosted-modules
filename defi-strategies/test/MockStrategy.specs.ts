@@ -17,6 +17,7 @@ describe("Mock Handler", async () => {
   let strategyModule: Contract;
   let mockHandler: Contract;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
@@ -163,7 +164,7 @@ describe("Mock Handler", async () => {
 
     await expect(
       strategyModule.execStrategy(userSA.address, transaction, signature)
-    ).to.be.revertedWith("FeeTransferFailed");
+    ).to.be.revertedWith("TransferFailed");
   });
 
   it("Should get the transaction hash", async function () {

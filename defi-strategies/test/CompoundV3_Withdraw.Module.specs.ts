@@ -44,6 +44,7 @@ describe("Compound V3 withdraw", async () => {
   let providerAddress: any;
   let wethProviderAddress: any;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
@@ -174,10 +175,10 @@ describe("Compound V3 withdraw", async () => {
       );
 
     try {
-      await strategyModule.requiredTxFee(userSA.address, transaction);
+      await strategyModule.requiredTxGas(userSA.address, transaction);
     } catch (error) {
       fee = decodeError(error, errAbi).args;
-      fee = fee[0];
+      fee = fee[0].mul(gasPrice);
     }
 
     await strategyModule.execStrategy(userSA.address, transaction, signature);
@@ -232,10 +233,10 @@ describe("Compound V3 withdraw", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
@@ -294,10 +295,10 @@ describe("Compound V3 withdraw", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
@@ -356,10 +357,10 @@ describe("Compound V3 withdraw", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
@@ -390,7 +391,7 @@ describe("Compound V3 withdraw", async () => {
       let baseToken: Contract;
       const supplyAmount = ethers.utils.parseEther("1");
 
-      it("normal", async function () {
+      it("normal [ @skip-on-coverage ]", async function () {
         const { userSA, ecdsaModule, errAbi } = await setupTests();
         await supplyToken(
           WrappedETH,
@@ -429,10 +430,10 @@ describe("Compound V3 withdraw", async () => {
           userSA.address
         );
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         const execRes = await callExecStrategy(
@@ -458,7 +459,7 @@ describe("Compound V3 withdraw", async () => {
         );
       });
 
-      it("partial", async function () {
+      it("partial [ @skip-on-coverage ]", async function () {
         const { userSA, ecdsaModule, errAbi } = await setupTests();
         await supplyToken(
           WrappedETH,
@@ -496,10 +497,10 @@ describe("Compound V3 withdraw", async () => {
         );
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         const execRes = await callExecStrategy(
@@ -525,7 +526,7 @@ describe("Compound V3 withdraw", async () => {
         );
       });
 
-      it("max amount", async function () {
+      it("max amount [ @skip-on-coverage ]", async function () {
         const { userSA, ecdsaModule, errAbi } = await setupTests();
         await supplyToken(
           WrappedETH,
@@ -562,10 +563,10 @@ describe("Compound V3 withdraw", async () => {
           userSA.address
         );
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         const execRes = await callExecStrategy(
