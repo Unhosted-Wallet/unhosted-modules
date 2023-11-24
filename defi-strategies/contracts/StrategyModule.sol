@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 import {ISignatureValidator, ISignatureValidatorConstants} from "contracts/interfaces/ISignatureValidator.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";

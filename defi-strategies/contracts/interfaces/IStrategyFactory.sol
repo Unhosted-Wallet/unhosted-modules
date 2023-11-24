@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 /**
  * @title Strategy Module Factory - factory responsible for deploying Strategy Modules using CREATE2
