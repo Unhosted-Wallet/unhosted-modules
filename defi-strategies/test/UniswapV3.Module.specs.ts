@@ -13,6 +13,7 @@ import {
   UNISWAPV3_QUOTER,
   DAI_TOKEN,
   USDT_TOKEN,
+  UNISWAPV3_ROUTER,
 } from "./utils/constants_eth";
 import { MAX_UINT256 } from "./utils/constants";
 
@@ -122,7 +123,7 @@ describe("Uniswap V3", async () => {
 
     uniV3handler = await (
       await ethers.getContractFactory("UniswapV3Handler")
-    ).deploy(WRAPPED_NATIVE_TOKEN);
+    ).deploy(WRAPPED_NATIVE_TOKEN, UNISWAPV3_ROUTER);
 
     strategyModule = await getStrategyModule(
       alice.address,
