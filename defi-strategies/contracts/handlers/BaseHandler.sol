@@ -73,12 +73,4 @@ abstract contract BaseHandler {
     function _revertMsg(string memory functionName) internal pure {
         _revertMsg(functionName, "Unspecified");
     }
-
-    function _requireMsg(
-        bool condition,
-        string memory functionName,
-        string memory reason
-    ) internal pure {
-        if (!condition) _revertMsg(functionName, reason);
-    }
 }

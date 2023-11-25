@@ -108,17 +108,9 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
     ) public payable {
         {
             uint256 length = assets.length;
-            _requireMsg(
-                length == amounts.length,
-                "flashLoan",
-                "assets and amounts do not match"
-            );
-
-            _requireMsg(
-                length == modes.length,
-                "flashLoan",
-                "assets and modes do not match"
-            );
+            if (length != amounts.length || length != modes.length) {
+                revert NoArrayParity();
+            }
         }
         address handler;
         address flashloanHandler = fallbackHandler;
@@ -278,11 +270,9 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
             DataTypes.ReserveData memory data
         ) {
             aToken = data.aTokenAddress;
-            _requireMsg(
-                aToken != address(0),
-                "General",
-                "aToken should not be zero address"
-            );
+            if (aToken == address(0)) {
+                revert InvalidAddress();
+            }
         } catch Error(string memory reason) {
             _revertMsg("General", reason);
         } catch {

@@ -3,6 +3,9 @@
 pragma solidity ^0.8.20;
 
 interface IUniswapV3Handler {
+    error InvalidPathSize();
+    error InvalidAddress();
+
     function exactInputSingleFromEther(
         address tokenOut,
         uint24 fee,

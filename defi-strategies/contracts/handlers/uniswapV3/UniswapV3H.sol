@@ -107,11 +107,9 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         // Extract tokenIn and tokenOut
         address tokenIn = _getFirstToken(path);
         // Input token must be WETH
-        _requireMsg(
-            tokenIn == address(wrappedNativeTokenUniV3),
-            "exactInputFromEther",
-            "Input not wrapped native token"
-        );
+        if (tokenIn != address(wrappedNativeTokenUniV3)) {
+            revert InvalidAddress();
+        }
         // Build params for router call
         ISwapRouter.ExactInputParams memory params;
         params.path = path;
@@ -132,11 +130,9 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         address tokenIn = _getFirstToken(path);
         address tokenOut = _getLastToken(path);
         // Output token must be WETH
-        _requireMsg(
-            tokenOut == address(wrappedNativeTokenUniV3),
-            "exactInputToEther",
-            "Output not wrapped native token"
-        );
+        if (tokenOut != address(wrappedNativeTokenUniV3)) {
+            revert InvalidAddress();
+        }
         // Build params for router call
         ISwapRouter.ExactInputParams memory params;
         params.path = path;
@@ -257,11 +253,9 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         // Note that the first token is tokenOut in exactOutput functions, vice versa
         address tokenIn = _getLastToken(path);
         // Input token must be WETH
-        _requireMsg(
-            tokenIn == address(wrappedNativeTokenUniV3),
-            "exactOutputFromEther",
-            "Input not wrapped native token"
-        );
+        if (tokenIn != address(wrappedNativeTokenUniV3)) {
+            revert InvalidAddress();
+        }
         // Build params for router call
         ISwapRouter.ExactOutputParams memory params;
         params.path = path;
@@ -284,11 +278,9 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         address tokenIn = _getLastToken(path);
         address tokenOut = _getFirstToken(path);
         // Out token must be WETH
-        _requireMsg(
-            tokenOut == address(wrappedNativeTokenUniV3),
-            "exactOutputToEther",
-            "Output not wrapped native token"
-        );
+        if (tokenOut != address(wrappedNativeTokenUniV3)) {
+            revert InvalidAddress();
+        }
         // Build params for router call
         ISwapRouter.ExactOutputParams memory params;
         params.path = path;
@@ -410,7 +402,9 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
     }
 
     function _getLastToken(bytes memory path) internal pure returns (address) {
-        _requireMsg(path.length >= PATH_SIZE, "General", "Path size too small");
+        if (path.length < PATH_SIZE) {
+            revert InvalidPathSize();
+        }
         return path.toAddress(path.length - ADDRESS_SIZE);
     }
 }
