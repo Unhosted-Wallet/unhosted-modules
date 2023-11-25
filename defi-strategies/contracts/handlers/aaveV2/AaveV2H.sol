@@ -168,7 +168,7 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
         override
         returns (string memory)
     {
-        return "HAaveProtocolV2";
+        return "AaveV2H";
     }
 
     function _deposit(

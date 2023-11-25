@@ -184,7 +184,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
         override
         returns (string memory)
     {
-        return "HCompoundV3";
+        return "CompoundV3H";
     }
 
     /* ========== INTERNAL FUNCTIONS ========== */

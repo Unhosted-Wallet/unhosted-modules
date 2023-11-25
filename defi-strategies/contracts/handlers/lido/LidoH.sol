@@ -39,6 +39,6 @@ contract LidoHandler is BaseHandler, ILidoHandler {
         override
         returns (string memory)
     {
-        return "HLido";
+        return "LidoH";
     }
 }
