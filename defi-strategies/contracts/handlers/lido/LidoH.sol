@@ -18,7 +18,7 @@ contract LidoHandler is BaseHandler, ILidoHandler {
 
     function submit(
         uint256 value
-    ) external payable returns (uint256 stTokenAmount) {
+    ) public payable returns (uint256 stTokenAmount) {
         value = _getBalance(NATIVE_TOKEN_ADDRESS, value);
 
         try lidoProxy.submit{value: value}(referral) returns (
@@ -39,6 +39,6 @@ contract LidoHandler is BaseHandler, ILidoHandler {
         override
         returns (string memory)
     {
-        return "HLido";
+        return "LidoH";
     }
 }

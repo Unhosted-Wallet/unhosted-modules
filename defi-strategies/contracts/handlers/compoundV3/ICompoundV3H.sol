@@ -3,6 +3,10 @@
 pragma solidity 0.8.20;
 
 interface ICompoundV3Handler {
+    error InvalidAmount();
+    error InvalidComet();
+    error NotAllowed();
+
     function supply(
         address comet,
         address asset,

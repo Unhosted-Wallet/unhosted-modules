@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 abstract contract Enum {
     enum Operation {
@@ -62,26 +62,32 @@ interface IStrategyModule {
      * @param smartAccount, address of biconomy smart account to execute strategy for
      * @param _tx, StrategyTransaction structure including amount if value to send to handler, gas and the arbitrary data to call on handler
      * @param signatures, signature that should be signed by SA owner following EIP1271
-     * @return success whether the call is success or fail
+     * @return fee paid fee to beneficiary
+     * @return executed whether the execution is success or fail
      * @return returnData the data returned from handler called function
      */
     function execStrategy(
         address smartAccount,
         StrategyTransaction memory _tx,
         bytes memory signatures
-    ) external payable returns (bool success, bytes memory returnData);
+    ) external returns (uint256 fee, bool executed, bytes memory returnData);
 
     /**
      * @dev Allows to estimate a transaction.
      * @dev This method is for estimation only, it will always revert and encode the result in the revert data.
-     * @dev Call this method to get an estimate of the execTransactionFromModule costs that are deducted with `execStrategy`
-     * @param smartAccount, address of biconomy smart account to execute strategy for
+     * @dev Call this method to get an estimate of the execTransactionFromModule gas costs that are deducted with `execStrategy`
+     * @param smartAccount, address of biconomy smart account that execute tx
      * @param _tx, StrategyTransaction structure including amount if value to send to handler, gas and the arbitrary data to call on handler
      */
-    function requiredTxFee(
+    function requiredTxGas(
         address smartAccount,
         StrategyTransaction memory _tx
     ) external;
+
+    /**
+     * @dev Allows beneficiary to claim the accumulated fees in module contract
+     */
+    function claim() external;
 
     /**
      * @dev Returns hash to be signed by owner.

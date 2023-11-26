@@ -3,12 +3,16 @@
 pragma solidity ^0.8.20;
 
 interface IUniswapV3Handler {
+    error InvalidPathSize();
+    error InvalidAddress();
+
     function exactInputSingleFromEther(
         address tokenOut,
         uint24 fee,
         uint256 amountIn,
         uint256 amountOutMinimum,
-        uint160 sqrtPriceLimitX96
+        uint160 sqrtPriceLimitX96,
+        uint256 deadline
     ) external payable returns (uint256 amountOut);
 
     function exactInputSingleToEther(
@@ -16,7 +20,8 @@ interface IUniswapV3Handler {
         uint24 fee,
         uint256 amountIn,
         uint256 amountOutMinimum,
-        uint160 sqrtPriceLimitX96
+        uint160 sqrtPriceLimitX96,
+        uint256 deadline
     ) external payable returns (uint256 amountOut);
 
     function exactInputSingle(
@@ -25,25 +30,29 @@ interface IUniswapV3Handler {
         uint24 fee,
         uint256 amountIn,
         uint256 amountOutMinimum,
-        uint160 sqrtPriceLimitX96
+        uint160 sqrtPriceLimitX96,
+        uint256 deadline
     ) external payable returns (uint256 amountOut);
 
     function exactInputFromEther(
         bytes memory path,
         uint256 amountIn,
-        uint256 amountOutMinimum
+        uint256 amountOutMinimum,
+        uint256 deadline
     ) external payable returns (uint256 amountOut);
 
     function exactInputToEther(
         bytes memory path,
         uint256 amountIn,
-        uint256 amountOutMinimum
+        uint256 amountOutMinimum,
+        uint256 deadline
     ) external payable returns (uint256 amountOut);
 
     function exactInput(
         bytes memory path,
         uint256 amountIn,
-        uint256 amountOutMinimum
+        uint256 amountOutMinimum,
+        uint256 deadline
     ) external payable returns (uint256 amountOut);
 
     function exactOutputSingleFromEther(
@@ -51,7 +60,8 @@ interface IUniswapV3Handler {
         uint24 fee,
         uint256 amountOut,
         uint256 amountInMaximum,
-        uint160 sqrtPriceLimitX96
+        uint160 sqrtPriceLimitX96,
+        uint256 deadline
     ) external payable returns (uint256 amountIn);
 
     function exactOutputSingleToEther(
@@ -59,7 +69,8 @@ interface IUniswapV3Handler {
         uint24 fee,
         uint256 amountOut,
         uint256 amountInMaximum,
-        uint160 sqrtPriceLimitX96
+        uint160 sqrtPriceLimitX96,
+        uint256 deadline
     ) external payable returns (uint256 amountIn);
 
     function exactOutputSingle(
@@ -68,24 +79,28 @@ interface IUniswapV3Handler {
         uint24 fee,
         uint256 amountOut,
         uint256 amountInMaximum,
-        uint160 sqrtPriceLimitX96
+        uint160 sqrtPriceLimitX96,
+        uint256 deadline
     ) external payable returns (uint256 amountIn);
 
     function exactOutputFromEther(
         bytes memory path,
         uint256 amountOut,
-        uint256 amountInMaximum
+        uint256 amountInMaximum,
+        uint256 deadline
     ) external payable returns (uint256 amountIn);
 
     function exactOutputToEther(
         bytes memory path,
         uint256 amountOut,
-        uint256 amountInMaximum
+        uint256 amountInMaximum,
+        uint256 deadline
     ) external payable returns (uint256 amountIn);
 
     function exactOutput(
         bytes memory path,
         uint256 amountOut,
-        uint256 amountInMaximum
+        uint256 amountInMaximum,
+        uint256 deadline
     ) external payable returns (uint256 amountIn);
 }

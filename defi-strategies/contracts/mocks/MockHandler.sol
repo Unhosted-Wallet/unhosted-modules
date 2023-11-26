@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 import {IStrategyModule} from "contracts/interfaces/IStrategyModule.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
@@ -24,6 +24,10 @@ contract MockHandler {
             _tx,
             "0x0"
         );
+    }
+
+    function emptyWallet() external {
+        address(strategyModule).call{value: address(this).balance}("");
     }
 
     function checkInterface(

@@ -17,6 +17,7 @@ describe("Mock Handler", async () => {
   let strategyModule: Contract;
   let mockHandler: Contract;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
@@ -139,6 +140,31 @@ describe("Mock Handler", async () => {
       const { error } = decodeError(err);
       expect(error).to.be.eq("Empty error data returned");
     }
+  });
+
+  it("Should revert if there is not enough fee in user SA", async function () {
+    const { userSA, ecdsaModule } = await setupTests();
+    const value = ethers.utils.parseEther("1");
+    const handler = mockHandler.address;
+
+    const data = (
+      await ethers.getContractFactory("MockHandler")
+    ).interface.encodeFunctionData("emptyWallet()");
+
+    const { transaction, signature } =
+      await buildEcdsaModuleAuthorizedStrategyTx(
+        handler,
+        data,
+        userSA,
+        smartAccountOwner,
+        ecdsaModule.address,
+        strategyModule,
+        0
+      );
+
+    await expect(
+      strategyModule.execStrategy(userSA.address, transaction, signature)
+    ).to.be.revertedWith("TransferFailed");
   });
 
   it("Should get the transaction hash", async function () {

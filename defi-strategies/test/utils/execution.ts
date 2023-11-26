@@ -20,6 +20,7 @@ export const EIP_DOMAIN = {
   EIP712Domain: [
     { type: "uint256", name: "chainId" },
     { type: "address", name: "verifyingContract" },
+    { type: "bytes32", name: "salt" },
   ],
 };
 
@@ -135,24 +136,46 @@ export const call = async (
 export const callExecStrategy = async (
   contract: Contract,
   params: any[],
-  output: string[],
-  fee: any
+  output: string[]
 ): Promise<any> => {
   const data = contract.interface.encodeFunctionData("execStrategy", params);
 
   const txRes = await waffle.provider.call({
     to: contract.address,
     data: data,
-    value: fee,
   });
 
-  const result = ethers.utils.defaultAbiCoder.decode(["bool", "bytes"], txRes);
+  const result = ethers.utils.defaultAbiCoder.decode(
+    ["uint256", "bool", "bytes"],
+    txRes
+  );
 
-  const decodedResult = ethers.utils.defaultAbiCoder.decode(output, result[1]);
+  const decodedResult = ethers.utils.defaultAbiCoder.decode(output, result[2]);
 
-  await contract.execStrategy(params[0], params[1], params[2], { value: fee });
+  await contract.execStrategy(params[0], params[1], params[2]);
 
-  return decodedResult;
+  return [decodedResult[0], result[0].mul(ethers.utils.parseUnits("30", 9))];
+};
+
+export const callExecStrategyReturnFee = async (
+  contract: Contract,
+  params: any[]
+): Promise<any> => {
+  const data = contract.interface.encodeFunctionData("execStrategy", params);
+
+  const txRes = await waffle.provider.call({
+    to: contract.address,
+    data: data,
+  });
+
+  const result = ethers.utils.defaultAbiCoder.decode(
+    ["uint256", "bool", "bytes"],
+    txRes
+  );
+
+  await contract.execStrategy(params[0], params[1], params[2]);
+
+  return result[0].mul(ethers.utils.parseUnits("30", 9));
 };
 
 export const calculateSafeDomainSeparator = (
@@ -263,7 +286,11 @@ export const strategySignTypedData = async (
   return {
     signer: signerAddress,
     data: await signer._signTypedData(
-      { verifyingContract: safe.address, chainId: cid },
+      {
+        verifyingContract: strategyModule.address,
+        chainId: cid,
+        salt: ethers.utils.hexZeroPad(safe.address, 32),
+      },
       EIP712_EXECUTE_STRATEGY_TYPE,
       {
         handler: handler,

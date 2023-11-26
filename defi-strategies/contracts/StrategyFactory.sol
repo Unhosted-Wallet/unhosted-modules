@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 import {Proxy} from "contracts/Proxy.sol";
 import {IStrategyModuleFactory} from "contracts/interfaces/IStrategyFactory.sol";
@@ -13,14 +13,25 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * @author M. Zakeri Rad - <@zakrad>
  */
 contract StrategyModuleFactory is Ownable, IStrategyModuleFactory {
-    address public immutable basicImplementation;
+    address public basicImplementation;
 
     constructor(address _basicImplementation) {
-        require(
-            _basicImplementation != address(0),
-            "implementation cannot be zero"
-        );
+        if (_basicImplementation == address(0)) {
+            revert InvalidAddress();
+        }
         basicImplementation = _basicImplementation;
+    }
+
+    /**
+     * @dev See {IStrategyModuleFactory-updateImplementation}.
+     */
+    function updateImplementation(
+        address newImplementation
+    ) external onlyOwner {
+        if (newImplementation == address(0)) {
+            revert InvalidAddress();
+        }
+        basicImplementation = newImplementation;
     }
 
     /**
@@ -73,7 +84,10 @@ contract StrategyModuleFactory is Ownable, IStrategyModuleFactory {
                 salt
             )
         }
-        require(address(proxy) != address(0), "Create2 call failed");
+
+        if (address(proxy) == address(0)) {
+            revert Create2Failed();
+        }
 
         assembly {
             let success := call(

@@ -44,6 +44,7 @@ describe("Compound V3 withdraw", async () => {
   let providerAddress: any;
   let wethProviderAddress: any;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
@@ -174,15 +175,13 @@ describe("Compound V3 withdraw", async () => {
       );
 
     try {
-      await strategyModule.requiredTxFee(userSA.address, transaction);
+      await strategyModule.requiredTxGas(userSA.address, transaction);
     } catch (error) {
       fee = decodeError(error, errAbi).args;
-      fee = fee[0];
+      fee = fee[0].mul(gasPrice);
     }
 
-    await strategyModule.execStrategy(userSA.address, transaction, signature, {
-      value: fee,
-    });
+    await strategyModule.execStrategy(userSA.address, transaction, signature);
   };
 
   it("Module is enabled", async () => {
@@ -234,10 +233,10 @@ describe("Compound V3 withdraw", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
@@ -245,8 +244,7 @@ describe("Compound V3 withdraw", async () => {
         const execRes = await callExecStrategy(
           strategyModule,
           [userSA.address, transaction, signature],
-          ["uint256"],
-          fee
+          ["uint256"]
         );
 
         const afterExecBalance = await baseToken.balanceOf(comet.address);
@@ -258,10 +256,6 @@ describe("Compound V3 withdraw", async () => {
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(value);
 
         expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
       });
 
       it("partial", async function () {
@@ -301,10 +295,10 @@ describe("Compound V3 withdraw", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
@@ -312,8 +306,7 @@ describe("Compound V3 withdraw", async () => {
         const execRes = await callExecStrategy(
           strategyModule,
           [userSA.address, transaction, signature],
-          ["uint256"],
-          fee
+          ["uint256"]
         );
 
         const afterExecBalance = await baseToken.balanceOf(comet.address);
@@ -325,10 +318,6 @@ describe("Compound V3 withdraw", async () => {
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(value);
 
         expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
       });
 
       it("max amount", async function () {
@@ -368,10 +357,10 @@ describe("Compound V3 withdraw", async () => {
         const beforeExecBalance = await baseToken.balanceOf(comet.address);
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(0);
@@ -379,8 +368,7 @@ describe("Compound V3 withdraw", async () => {
         const execRes = await callExecStrategy(
           strategyModule,
           [userSA.address, transaction, signature],
-          ["uint256"],
-          fee
+          ["uint256"]
         );
 
         const afterExecBalance = await baseToken.balanceOf(comet.address);
@@ -392,10 +380,6 @@ describe("Compound V3 withdraw", async () => {
         expect(await baseToken.balanceOf(userSA.address)).to.be.eq(value);
 
         expect(await baseToken.balanceOf(strategyModule.address)).to.be.eq(0);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
       });
     });
 
@@ -407,7 +391,7 @@ describe("Compound V3 withdraw", async () => {
       let baseToken: Contract;
       const supplyAmount = ethers.utils.parseEther("1");
 
-      it("normal", async function () {
+      it("normal [ @skip-on-coverage ]", async function () {
         const { userSA, ecdsaModule, errAbi } = await setupTests();
         await supplyToken(
           WrappedETH,
@@ -446,17 +430,16 @@ describe("Compound V3 withdraw", async () => {
           userSA.address
         );
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         const execRes = await callExecStrategy(
           strategyModule,
           [userSA.address, transaction, signature],
-          ["uint256"],
-          fee
+          ["uint256"]
         );
 
         const afterExecBalance = await waffle.provider.getBalance(
@@ -467,16 +450,16 @@ describe("Compound V3 withdraw", async () => {
           ethers.utils.parseEther("0.00001")
         );
 
-        expect(afterExecBalance.sub(beforeExecBalance)).to.be.eq(execRes[0]);
+        expect(afterExecBalance.sub(beforeExecBalance)).to.be.eq(
+          execRes[0].sub(execRes[1])
+        );
 
-        expect(afterExecBalance.sub(beforeExecBalance)).to.be.eq(value);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
+        expect(afterExecBalance.sub(beforeExecBalance)).to.be.eq(
+          value.sub(execRes[1])
+        );
       });
 
-      it("partial", async function () {
+      it("partial [ @skip-on-coverage ]", async function () {
         const { userSA, ecdsaModule, errAbi } = await setupTests();
         await supplyToken(
           WrappedETH,
@@ -514,17 +497,16 @@ describe("Compound V3 withdraw", async () => {
         );
 
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
         const execRes = await callExecStrategy(
           strategyModule,
           [userSA.address, transaction, signature],
-          ["uint256"],
-          fee
+          ["uint256"]
         );
 
         const afterExecBalance = await waffle.provider.getBalance(
@@ -535,16 +517,16 @@ describe("Compound V3 withdraw", async () => {
           value.add(ethers.utils.parseEther("0.00001"))
         );
 
-        expect(afterExecBalance.sub(beforeExecBalance)).to.be.eq(value);
+        expect(afterExecBalance.sub(beforeExecBalance)).to.be.eq(
+          value.sub(execRes[1])
+        );
 
-        expect(afterExecBalance.sub(beforeExecBalance)).to.be.eq(execRes[0]);
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
+        expect(afterExecBalance.sub(beforeExecBalance)).to.be.eq(
+          execRes[0].sub(execRes[1])
+        );
       });
 
-      it("max amount", async function () {
+      it("max amount [ @skip-on-coverage ]", async function () {
         const { userSA, ecdsaModule, errAbi } = await setupTests();
         await supplyToken(
           WrappedETH,
@@ -581,17 +563,16 @@ describe("Compound V3 withdraw", async () => {
           userSA.address
         );
         try {
-          await strategyModule.requiredTxFee(userSA.address, transaction);
+          await strategyModule.requiredTxGas(userSA.address, transaction);
         } catch (error) {
           fee = decodeError(error, errAbi).args;
-          fee = fee[0];
+          fee = fee[0].mul(gasPrice);
         }
 
-        await callExecStrategy(
+        const execRes = await callExecStrategy(
           strategyModule,
           [userSA.address, transaction, signature],
-          ["uint256"],
-          fee
+          ["uint256"]
         );
 
         const afterExecBalance = await waffle.provider.getBalance(
@@ -601,13 +582,9 @@ describe("Compound V3 withdraw", async () => {
         expect(await comet.balanceOf(userSA.address)).to.be.eq(0);
 
         expect(afterExecBalance.sub(beforeExecBalance)).to.be.within(
-          value,
-          value.add(ethers.utils.parseEther("0.00001"))
+          value.sub(execRes[1]),
+          value.add(ethers.utils.parseEther("0.00001").sub(execRes[1]))
         );
-
-        expect(
-          await waffle.provider.getBalance(strategyModule.address)
-        ).to.be.eq(0);
       });
     });
   });

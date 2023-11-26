@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 import {ISignatureValidator, ISignatureValidatorConstants} from "contracts/interfaces/ISignatureValidator.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IExecFromModule, IStrategyModule, Enum} from "contracts/interfaces/IStrategyModule.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 /**
  * @title Strategy module for Biconomy Smart Accounts.
@@ -21,9 +20,9 @@ contract StrategyModule is
     ISignatureValidatorConstants,
     IStrategyModule
 {
-    // Domain Seperators keccak256("EIP712Domain(uint256 chainId,address verifyingContract)");
+    // Domain Seperators keccak256("EIP712Domain(uint256 chainId,address verifyingContract,bytes32 salt)");
     bytes32 internal constant DOMAIN_SEPARATOR_TYPEHASH =
-        0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
+        0x71062c282d40422f744945d587dbf4ecfd4f9cfad1d35d62c944373009d96162;
 
     //ExecuteStrategy
     // solhint-disable-next-line
@@ -32,11 +31,9 @@ contract StrategyModule is
         0x06d4deb91a5dc73a3ea344ed05631460315e2109778b250fdd941893ee92bec8;
 
     // solhint-disable-next-line
-    uint16 internal constant _feeFactor = 5000; // 50%
+    uint16 internal constant _gasFactor = 5000; // 50%
 
     uint256 private immutable CHAIN_ID;
-    // solhint-disable-next-line
-    address internal immutable _gasFeed;
 
     mapping(address => uint256) public nonces;
 
@@ -48,12 +45,15 @@ contract StrategyModule is
 
     error AlreadyInitialized();
     error AddressCanNotBeZero();
+    error NotAuthorized();
+    error TransferFailed(uint256);
     error RevertEstimation(uint256);
 
-    constructor(address gasFeed_) {
+    constructor() {
         CHAIN_ID = block.chainid;
-        _gasFeed = gasFeed_;
     }
+
+    receive() external payable {}
 
     function init(
         address beneficiary_,
@@ -77,10 +77,9 @@ contract StrategyModule is
         bytes memory signatures
     )
         public
-        payable
         virtual
         nonReentrant
-        returns (bool success, bytes memory returnData)
+        returns (uint256 gasUsed, bool executed, bytes memory returnData)
     {
         bytes32 txHash;
 
@@ -104,28 +103,32 @@ contract StrategyModule is
 
         {
             uint256 startGas = gasleft();
-            (success, returnData) = IExecFromModule(smartAccount)
+            (executed, returnData) = IExecFromModule(smartAccount)
                 .execTransactionFromModuleReturnData(
                     handler,
                     _tx.value,
                     _tx.data,
                     Enum.Operation.DelegateCall
                 );
-            uint256 used = (startGas - gasleft());
+            gasUsed = ((startGas - gasleft()) * _gasFactor) / 1e4;
 
-            (, int256 answer, , , ) = AggregatorV3Interface(_gasFeed)
-                .latestRoundData();
-            used = (used * uint256(answer) * _feeFactor) / 1e4;
-
-            payable(beneficiary).transfer(used);
-            payable(msg.sender).transfer(msg.value - used);
+            bool success = IExecFromModule(smartAccount)
+                .execTransactionFromModule(
+                    address(this),
+                    gasUsed * tx.gasprice,
+                    "",
+                    Enum.Operation.Call
+                );
+            if (!success) {
+                revert TransferFailed(gasUsed);
+            }
         }
     }
 
     /**
-     * @dev See {IStrategyModule-requiredTxFee}.
+     * @dev See {IStrategyModule-requiredTxGas}.
      */
-    function requiredTxFee(
+    function requiredTxGas(
         address smartAccount,
         StrategyTransaction memory _tx
     ) public {
@@ -137,13 +140,19 @@ contract StrategyModule is
             _tx.data,
             Enum.Operation.DelegateCall
         );
-        uint256 used = (startGas - gasleft());
+        uint256 gasUsed = (startGas - gasleft());
 
-        (, int256 answer, , , ) = AggregatorV3Interface(_gasFeed)
-            .latestRoundData();
+        revert RevertEstimation((gasUsed * _gasFactor) / 1e4);
+    }
 
-        used = (used * uint256(answer) * _feeFactor) / 1e4;
-        revert RevertEstimation(used);
+    /**
+     * @dev See {IStrategyModule-claim}.
+     */
+    function claim() public {
+        if (msg.sender != beneficiary) {
+            revert NotAuthorized();
+        }
+        beneficiary.call{value: address(this).balance}("");
     }
 
     /**
@@ -200,7 +209,12 @@ contract StrategyModule is
     ) public view returns (bytes32) {
         return
             keccak256(
-                abi.encode(DOMAIN_SEPARATOR_TYPEHASH, CHAIN_ID, smartAccount)
+                abi.encode(
+                    DOMAIN_SEPARATOR_TYPEHASH,
+                    CHAIN_ID,
+                    address(this),
+                    bytes32(uint256(uint160(smartAccount)))
+                )
             );
     }
 

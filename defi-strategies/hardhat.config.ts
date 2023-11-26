@@ -46,6 +46,12 @@ const config: HardhatUserConfig = {
           optimizer: { enabled: true, runs: 800 },
         },
       },
+      {
+        version: "0.8.19",
+        settings: {
+          optimizer: { enabled: true, runs: 800 },
+        },
+      },
     ],
   },
   networks: {
@@ -64,8 +70,8 @@ const config: HardhatUserConfig = {
               path: "m/44'/60'/0'/0",
               initialIndex: 0,
             },
-            initialBaseFeePerGas: 0,
-            gasPrice: 0,
+            initialBaseFeePerGas: parseUnits("30", "gwei").toNumber(),
+            gasPrice: parseUnits("30", "gwei").toNumber(),
             gas: 3000000,
           }
         : {

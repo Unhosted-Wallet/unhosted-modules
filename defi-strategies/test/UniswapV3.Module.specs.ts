@@ -13,6 +13,7 @@ import {
   UNISWAPV3_QUOTER,
   DAI_TOKEN,
   USDT_TOKEN,
+  UNISWAPV3_ROUTER,
 } from "./utils/constants_eth";
 import { MAX_UINT256 } from "./utils/constants";
 
@@ -41,6 +42,8 @@ describe("Uniswap V3", async () => {
   let providerAddress: any;
   let wethProviderAddress: any;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
+  let now;
 
   const encodePath = (path: any, fees: any) => {
     if (path.length !== fees.length + 1) {
@@ -121,7 +124,7 @@ describe("Uniswap V3", async () => {
 
     uniV3handler = await (
       await ethers.getContractFactory("UniswapV3Handler")
-    ).deploy(WRAPPED_NATIVE_TOKEN);
+    ).deploy(WRAPPED_NATIVE_TOKEN, UNISWAPV3_ROUTER);
 
     strategyModule = await getStrategyModule(
       alice.address,
@@ -155,8 +158,9 @@ describe("Uniswap V3", async () => {
   describe("Exact input", function () {
     describe("Single path", function () {
       describe("Ether in", function () {
-        it("normal", async function () {
+        it("normal [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
+          now = (await waffle.provider.getBlock("latest")).timestamp + 100;
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
           const tokenIn = WrappedETH.address;
@@ -176,8 +180,8 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputSingleFromEther(address,uint24,uint256,uint256,uint160)",
-            [tokenOut, fee2, amountIn, amountOutMinimum, sqrtPriceLimitX96]
+            "exactInputSingleFromEther(address,uint24,uint256,uint256,uint160,uint256)",
+            [tokenOut, fee2, amountIn, amountOutMinimum, sqrtPriceLimitX96, now]
           );
 
           const { transaction, signature } =
@@ -196,116 +200,38 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
             strategyModule,
             [userSA.address, transaction, signature],
-            ["uint256"],
-            fee
-          );
-
-          const afterExecBalance = await waffle.provider.getBalance(
-            userSA.address
-          );
-
-          expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
-
-          expect(execRes[0]).to.be.eq(res[0]);
-
-          expect(await token.balanceOf(userSA.address)).to.be.eq(
-            ethers.BigNumber.from(`${res}`)
-          );
-
-          expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-          expect(
-            await waffle.provider.getBalance(strategyModule.address)
-          ).to.be.eq(0);
-        });
-
-        it("max amount", async function () {
-          const { userSA, ecdsaModule, errAbi } = await setupTests();
-          const value = await waffle.provider.getBalance(userSA.address);
-          const handler = uniV3handler.address;
-          const tokenIn = WrappedETH.address;
-          const tokenOut = token.address;
-          const fee2 = ethers.BigNumber.from("3000");
-          const amountIn = value;
-          const amountOutMinimum = ethers.BigNumber.from("1");
-          const sqrtPriceLimitX96 = ethers.BigNumber.from("0");
-
-          const res = await call(
-            quoter,
-            "quoteExactInputSingle",
-            [tokenIn, tokenOut, fee2, amountIn, sqrtPriceLimitX96],
             ["uint256"]
           );
 
-          const data = (
-            await ethers.getContractFactory("UniswapV3Handler")
-          ).interface.encodeFunctionData(
-            "exactInputSingleFromEther(address,uint24,uint256,uint256,uint160)",
-            [tokenOut, fee2, MAX_UINT256, amountOutMinimum, sqrtPriceLimitX96]
-          );
-
-          const { transaction, signature } =
-            await buildEcdsaModuleAuthorizedStrategyTx(
-              handler,
-              data,
-              userSA,
-              smartAccountOwner,
-              ecdsaModule.address,
-              strategyModule,
-              value.toString()
-            );
-
-          const beforeExecBalance = await waffle.provider.getBalance(
-            userSA.address
-          );
-
-          try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
-          } catch (error) {
-            fee = decodeError(error, errAbi).args;
-            fee = fee[0];
-          }
-
-          const execRes = await callExecStrategy(
-            strategyModule,
-            [userSA.address, transaction, signature],
-            ["uint256"],
-            fee
-          );
-
           const afterExecBalance = await waffle.provider.getBalance(
             userSA.address
           );
 
-          expect(execRes[0]).to.be.eq(res[0]);
-
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
-            beforeExecBalance
+            value.add(execRes[1])
           );
+
+          expect(execRes[0]).to.be.eq(res[0]);
 
           expect(await token.balanceOf(userSA.address)).to.be.eq(
             ethers.BigNumber.from(`${res}`)
           );
 
           expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-          expect(
-            await waffle.provider.getBalance(strategyModule.address)
-          ).to.be.eq(0);
         });
       });
 
       describe("Ether out", function () {
-        it("normal", async function () {
+        it("normal [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
@@ -330,8 +256,8 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputSingleToEther(address,uint24,uint256,uint256,uint160)",
-            [tokenIn, fee2, amountIn, amountOutMinimum, sqrtPriceLimitX96]
+            "exactInputSingleToEther(address,uint24,uint256,uint256,uint160,uint256)",
+            [tokenIn, fee2, amountIn, amountOutMinimum, sqrtPriceLimitX96, now]
           );
 
           const { transaction, signature } =
@@ -352,17 +278,16 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
             strategyModule,
             [userSA.address, transaction, signature],
-            ["uint256"],
-            fee
+            ["uint256"]
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -376,17 +301,13 @@ describe("Uniswap V3", async () => {
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
 
           expect(ethAfterExecBalance.sub(ethBeforeExecBalance)).to.be.eq(
-            ethers.BigNumber.from(`${res}`)
+            ethers.BigNumber.from(`${res}`).sub(execRes[1])
           );
 
           expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-          expect(
-            await waffle.provider.getBalance(strategyModule.address)
-          ).to.be.eq(0);
         });
 
-        it("max amount", async function () {
+        it("max amount [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
@@ -411,8 +332,15 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputSingleToEther(address,uint24,uint256,uint256,uint160)",
-            [tokenIn, fee2, MAX_UINT256, amountOutMinimum, sqrtPriceLimitX96]
+            "exactInputSingleToEther(address,uint24,uint256,uint256,uint160,uint256)",
+            [
+              tokenIn,
+              fee2,
+              MAX_UINT256,
+              amountOutMinimum,
+              sqrtPriceLimitX96,
+              now,
+            ]
           );
 
           const { transaction, signature } =
@@ -433,17 +361,16 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
             strategyModule,
             [userSA.address, transaction, signature],
-            ["uint256"],
-            fee
+            ["uint256"]
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -459,20 +386,17 @@ describe("Uniswap V3", async () => {
           );
 
           expect(ethAfterExecBalance.sub(ethBeforeExecBalance)).to.be.eq(
-            ethers.BigNumber.from(`${res}`)
+            ethers.BigNumber.from(`${res}`).sub(execRes[1])
           );
 
           expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-          expect(
-            await waffle.provider.getBalance(strategyModule.address)
-          ).to.be.eq(0);
         });
       });
 
       describe("Token only", function () {
         it("normal", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
+          now = (await waffle.provider.getBlock("latest")).timestamp + 100;
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
           const tokenIn = token.address;
@@ -496,7 +420,7 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputSingle(address,address,uint24,uint256,uint256,uint160)",
+            "exactInputSingle(address,address,uint24,uint256,uint256,uint160,uint256)",
             [
               tokenIn,
               tokenOut,
@@ -504,6 +428,7 @@ describe("Uniswap V3", async () => {
               amountIn,
               amountOutMinimum,
               sqrtPriceLimitX96,
+              now,
             ]
           );
 
@@ -525,17 +450,16 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
             strategyModule,
             [userSA.address, transaction, signature],
-            ["uint256"],
-            fee
+            ["uint256"]
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -553,10 +477,6 @@ describe("Uniswap V3", async () => {
           );
 
           expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-          expect(
-            await waffle.provider.getBalance(strategyModule.address)
-          ).to.be.eq(0);
         });
 
         it("max amount", async function () {
@@ -584,7 +504,7 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputSingle(address,address,uint24,uint256,uint256,uint160)",
+            "exactInputSingle(address,address,uint24,uint256,uint256,uint160,uint256)",
             [
               tokenIn,
               tokenOut,
@@ -592,6 +512,7 @@ describe("Uniswap V3", async () => {
               MAX_UINT256,
               amountOutMinimum,
               sqrtPriceLimitX96,
+              now,
             ]
           );
 
@@ -613,17 +534,16 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
             strategyModule,
             [userSA.address, transaction, signature],
-            ["uint256"],
-            fee
+            ["uint256"]
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -643,17 +563,13 @@ describe("Uniswap V3", async () => {
           );
 
           expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-          expect(
-            await waffle.provider.getBalance(strategyModule.address)
-          ).to.be.eq(0);
         });
       });
     });
 
     describe("Multi path", function () {
       describe("Ether in", function () {
-        it("normal", async function () {
+        it("normal [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
@@ -676,8 +592,8 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputFromEther(bytes,uint256,uint256)",
-            [path, amountIn, amountOutMinimum]
+            "exactInputFromEther(bytes,uint256,uint256,uint256)",
+            [path, amountIn, amountOutMinimum, now]
           );
 
           const { transaction, signature } =
@@ -696,116 +612,38 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
             strategyModule,
             [userSA.address, transaction, signature],
-            ["uint256"],
-            fee
-          );
-
-          const afterExecBalance = await waffle.provider.getBalance(
-            userSA.address
-          );
-
-          expect(execRes[0]).to.be.eq(res[0]);
-
-          expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
-
-          expect(await token.balanceOf(userSA.address)).to.be.eq(
-            ethers.BigNumber.from(`${res}`)
-          );
-
-          expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-          expect(
-            await waffle.provider.getBalance(strategyModule.address)
-          ).to.be.eq(0);
-        });
-
-        it("max amount", async function () {
-          const { userSA, ecdsaModule, errAbi } = await setupTests();
-          const value = await waffle.provider.getBalance(userSA.address);
-          const handler = uniV3handler.address;
-          const tokens = [WrappedETH.address, token2.address, token.address];
-          const fees = [
-            ethers.BigNumber.from("3000"),
-            ethers.BigNumber.from("500"),
-          ];
-          const amountIn = value;
-          const amountOutMinimum = ethers.BigNumber.from("1");
-          const path = encodePath(tokens, fees);
-
-          const res = await call(
-            quoter,
-            "quoteExactInput",
-            [path, amountIn],
             ["uint256"]
           );
 
-          const data = (
-            await ethers.getContractFactory("UniswapV3Handler")
-          ).interface.encodeFunctionData(
-            "exactInputFromEther(bytes,uint256,uint256)",
-            [path, MAX_UINT256, amountOutMinimum]
-          );
-
-          const { transaction, signature } =
-            await buildEcdsaModuleAuthorizedStrategyTx(
-              handler,
-              data,
-              userSA,
-              smartAccountOwner,
-              ecdsaModule.address,
-              strategyModule,
-              value.toString()
-            );
-
-          const beforeExecBalance = await waffle.provider.getBalance(
-            userSA.address
-          );
-
-          try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
-          } catch (error) {
-            fee = decodeError(error, errAbi).args;
-            fee = fee[0];
-          }
-
-          const execRes = await callExecStrategy(
-            strategyModule,
-            [userSA.address, transaction, signature],
-            ["uint256"],
-            fee
-          );
-
           const afterExecBalance = await waffle.provider.getBalance(
             userSA.address
           );
 
           expect(execRes[0]).to.be.eq(res[0]);
 
-          expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
+          expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
+            value.add(execRes[1])
+          );
 
           expect(await token.balanceOf(userSA.address)).to.be.eq(
             ethers.BigNumber.from(`${res}`)
           );
 
           expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-          expect(
-            await waffle.provider.getBalance(strategyModule.address)
-          ).to.be.eq(0);
         });
       });
 
       describe("Ether out", function () {
-        it("normal", async function () {
+        it("normal [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
@@ -832,8 +670,8 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputToEther(bytes,uint256,uint256)",
-            [path, amountIn, amountOutMinimum]
+            "exactInputToEther(bytes,uint256,uint256,uint256)",
+            [path, amountIn, amountOutMinimum, now]
           );
 
           const { transaction, signature } =
@@ -854,17 +692,16 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
             strategyModule,
             [userSA.address, transaction, signature],
-            ["uint256"],
-            fee
+            ["uint256"]
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -878,17 +715,13 @@ describe("Uniswap V3", async () => {
           expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(value);
 
           expect(ethAfterExecBalance.sub(ethBeforeExecBalance)).to.be.eq(
-            ethers.BigNumber.from(`${res}`)
+            ethers.BigNumber.from(`${res}`).sub(execRes[1])
           );
 
           expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-          expect(
-            await waffle.provider.getBalance(strategyModule.address)
-          ).to.be.eq(0);
         });
 
-        it("max amount", async function () {
+        it("max amount [ @skip-on-coverage ]", async function () {
           const { userSA, ecdsaModule, errAbi } = await setupTests();
           const value = ethers.utils.parseEther("1");
           const handler = uniV3handler.address;
@@ -915,8 +748,8 @@ describe("Uniswap V3", async () => {
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
           ).interface.encodeFunctionData(
-            "exactInputToEther(bytes,uint256,uint256)",
-            [path, MAX_UINT256, amountOutMinimum]
+            "exactInputToEther(bytes,uint256,uint256,uint256)",
+            [path, MAX_UINT256, amountOutMinimum, now]
           );
 
           const { transaction, signature } =
@@ -937,17 +770,16 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
             strategyModule,
             [userSA.address, transaction, signature],
-            ["uint256"],
-            fee
+            ["uint256"]
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -963,14 +795,10 @@ describe("Uniswap V3", async () => {
           );
 
           expect(ethAfterExecBalance.sub(ethBeforeExecBalance)).to.be.eq(
-            ethers.BigNumber.from(`${res}`)
+            ethers.BigNumber.from(`${res}`).sub(execRes[1])
           );
 
           expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-          expect(
-            await waffle.provider.getBalance(strategyModule.address)
-          ).to.be.eq(0);
         });
       });
 
@@ -1001,11 +829,10 @@ describe("Uniswap V3", async () => {
 
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
-          ).interface.encodeFunctionData("exactInput(bytes,uint256,uint256)", [
-            path,
-            amountIn,
-            amountOutMinimum,
-          ]);
+          ).interface.encodeFunctionData(
+            "exactInput(bytes,uint256,uint256,uint256)",
+            [path, amountIn, amountOutMinimum, now]
+          );
 
           const { transaction, signature } =
             await buildEcdsaModuleAuthorizedStrategyTx(
@@ -1025,17 +852,16 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
             strategyModule,
             [userSA.address, transaction, signature],
-            ["uint256"],
-            fee
+            ["uint256"]
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -1053,10 +879,6 @@ describe("Uniswap V3", async () => {
           );
 
           expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-          expect(
-            await waffle.provider.getBalance(strategyModule.address)
-          ).to.be.eq(0);
         });
 
         it("max amount", async function () {
@@ -1085,11 +907,10 @@ describe("Uniswap V3", async () => {
 
           const data = (
             await ethers.getContractFactory("UniswapV3Handler")
-          ).interface.encodeFunctionData("exactInput(bytes,uint256,uint256)", [
-            path,
-            MAX_UINT256,
-            amountOutMinimum,
-          ]);
+          ).interface.encodeFunctionData(
+            "exactInput(bytes,uint256,uint256,uint256)",
+            [path, MAX_UINT256, amountOutMinimum, now]
+          );
 
           const { transaction, signature } =
             await buildEcdsaModuleAuthorizedStrategyTx(
@@ -1109,17 +930,16 @@ describe("Uniswap V3", async () => {
           );
 
           try {
-            await strategyModule.requiredTxFee(userSA.address, transaction);
+            await strategyModule.requiredTxGas(userSA.address, transaction);
           } catch (error) {
             fee = decodeError(error, errAbi).args;
-            fee = fee[0];
+            fee = fee[0].mul(gasPrice);
           }
 
           const execRes = await callExecStrategy(
             strategyModule,
             [userSA.address, transaction, signature],
-            ["uint256"],
-            fee
+            ["uint256"]
           );
 
           const afterExecBalance = await token.balanceOf(userSA.address);
@@ -1139,10 +959,6 @@ describe("Uniswap V3", async () => {
           );
 
           expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-          expect(
-            await waffle.provider.getBalance(strategyModule.address)
-          ).to.be.eq(0);
         });
       });
     });
@@ -1150,7 +966,7 @@ describe("Uniswap V3", async () => {
     describe("Exact output", function () {
       describe("Single path", function () {
         describe("Ether in", function () {
-          it("normal", async function () {
+          it("normal [ @skip-on-coverage ]", async function () {
             const { userSA, ecdsaModule, errAbi } = await setupTests();
             const value = ethers.utils.parseEther("1");
             const handler = uniV3handler.address;
@@ -1171,8 +987,15 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputSingleFromEther(address,uint24,uint256,uint256,uint160)",
-              [tokenOut, fee2, amountOut, amountInMaximum, sqrtPriceLimitX96]
+              "exactOutputSingleFromEther(address,uint24,uint256,uint256,uint160,uint256)",
+              [
+                tokenOut,
+                fee2,
+                amountOut,
+                amountInMaximum,
+                sqrtPriceLimitX96,
+                now,
+              ]
             );
 
             const { transaction, signature } =
@@ -1191,94 +1014,18 @@ describe("Uniswap V3", async () => {
             );
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
               strategyModule,
               [userSA.address, transaction, signature],
-              ["uint256"],
-              fee
-            );
-
-            const afterExecBalance = await waffle.provider.getBalance(
-              userSA.address
-            );
-
-            expect(execRes[0]).to.be.eq(res[0]);
-
-            expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
-              ethers.BigNumber.from(`${res}`)
-            );
-
-            expect(await token.balanceOf(userSA.address)).to.be.eq(
-              ethers.BigNumber.from(amountOut)
-            );
-
-            expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-            expect(
-              await waffle.provider.getBalance(strategyModule.address)
-            ).to.be.eq(0);
-          });
-
-          it("max amount", async function () {
-            const { userSA, ecdsaModule, errAbi } = await setupTests();
-            const value = await waffle.provider.getBalance(userSA.address);
-            const handler = uniV3handler.address;
-            const tokenIn = WrappedETH.address;
-            const tokenOut = token.address;
-            const fee2 = ethers.BigNumber.from("3000");
-            const amountOut = ethers.utils.parseEther("1000");
-            const amountInMaximum = value;
-            const sqrtPriceLimitX96 = ethers.BigNumber.from("0");
-
-            const res = await call(
-              quoter,
-              "quoteExactOutputSingle",
-              [tokenIn, tokenOut, fee2, amountOut, sqrtPriceLimitX96],
               ["uint256"]
             );
 
-            const data = (
-              await ethers.getContractFactory("UniswapV3Handler")
-            ).interface.encodeFunctionData(
-              "exactOutputSingleFromEther(address,uint24,uint256,uint256,uint160)",
-              [tokenOut, fee2, amountOut, MAX_UINT256, sqrtPriceLimitX96]
-            );
-
-            const { transaction, signature } =
-              await buildEcdsaModuleAuthorizedStrategyTx(
-                handler,
-                data,
-                userSA,
-                smartAccountOwner,
-                ecdsaModule.address,
-                strategyModule,
-                value.toString()
-              );
-
-            const beforeExecBalance = await waffle.provider.getBalance(
-              userSA.address
-            );
-
-            try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
-            } catch (error) {
-              fee = decodeError(error, errAbi).args;
-              fee = fee[0];
-            }
-
-            const execRes = await callExecStrategy(
-              strategyModule,
-              [userSA.address, transaction, signature],
-              ["uint256"],
-              fee
-            );
-
             const afterExecBalance = await waffle.provider.getBalance(
               userSA.address
             );
@@ -1286,7 +1033,7 @@ describe("Uniswap V3", async () => {
             expect(execRes[0]).to.be.eq(res[0]);
 
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
-              ethers.BigNumber.from(`${res}`)
+              ethers.BigNumber.from(`${res}`).add(execRes[1])
             );
 
             expect(await token.balanceOf(userSA.address)).to.be.eq(
@@ -1294,15 +1041,11 @@ describe("Uniswap V3", async () => {
             );
 
             expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-            expect(
-              await waffle.provider.getBalance(strategyModule.address)
-            ).to.be.eq(0);
           });
         });
 
         describe("Ether out", function () {
-          it("normal", async function () {
+          it("normal [ @skip-on-coverage ]", async function () {
             const { userSA, ecdsaModule, errAbi } = await setupTests();
             const value = ethers.utils.parseEther("1");
             const handler = uniV3handler.address;
@@ -1327,8 +1070,15 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputSingleToEther(address,uint24,uint256,uint256,uint160)",
-              [tokenIn, fee2, amountOut, amountInMaximum, sqrtPriceLimitX96]
+              "exactOutputSingleToEther(address,uint24,uint256,uint256,uint160,uint256)",
+              [
+                tokenIn,
+                fee2,
+                amountOut,
+                amountInMaximum,
+                sqrtPriceLimitX96,
+                now,
+              ]
             );
 
             const { transaction, signature } =
@@ -1349,17 +1099,16 @@ describe("Uniswap V3", async () => {
             const beforeExecBalance = await token.balanceOf(userSA.address);
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
               strategyModule,
               [userSA.address, transaction, signature],
-              ["uint256"],
-              fee
+              ["uint256"]
             );
 
             const ethAfterExecBalance = await waffle.provider.getBalance(
@@ -1375,17 +1124,13 @@ describe("Uniswap V3", async () => {
             );
 
             expect(ethAfterExecBalance.sub(ethBeforeExecBalance)).to.be.eq(
-              amountOut
+              amountOut.sub(execRes[1])
             );
 
             expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-            expect(
-              await waffle.provider.getBalance(strategyModule.address)
-            ).to.be.eq(0);
           });
 
-          it("max amount", async function () {
+          it("max amount [ @skip-on-coverage ]", async function () {
             const { userSA, ecdsaModule, errAbi } = await setupTests();
             const value = ethers.utils.parseEther("1");
             const handler = uniV3handler.address;
@@ -1410,8 +1155,8 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputSingleToEther(address,uint24,uint256,uint256,uint160)",
-              [tokenIn, fee2, amountOut, MAX_UINT256, sqrtPriceLimitX96]
+              "exactOutputSingleToEther(address,uint24,uint256,uint256,uint160,uint256)",
+              [tokenIn, fee2, amountOut, MAX_UINT256, sqrtPriceLimitX96, now]
             );
 
             const { transaction, signature } =
@@ -1432,17 +1177,16 @@ describe("Uniswap V3", async () => {
             const beforeExecBalance = await token.balanceOf(userSA.address);
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
               strategyModule,
               [userSA.address, transaction, signature],
-              ["uint256"],
-              fee
+              ["uint256"]
             );
 
             const ethAfterExecBalance = await waffle.provider.getBalance(
@@ -1458,14 +1202,10 @@ describe("Uniswap V3", async () => {
             );
 
             expect(ethAfterExecBalance.sub(ethBeforeExecBalance)).to.be.eq(
-              amountOut
+              amountOut.sub(execRes[1])
             );
 
             expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-            expect(
-              await waffle.provider.getBalance(strategyModule.address)
-            ).to.be.eq(0);
           });
         });
 
@@ -1495,7 +1235,7 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputSingle(address,address,uint24,uint256,uint256,uint160)",
+              "exactOutputSingle(address,address,uint24,uint256,uint256,uint160,uint256)",
               [
                 tokenIn,
                 tokenOut,
@@ -1503,6 +1243,7 @@ describe("Uniswap V3", async () => {
                 amountOut,
                 amountInMaximum,
                 sqrtPriceLimitX96,
+                now,
               ]
             );
 
@@ -1524,17 +1265,16 @@ describe("Uniswap V3", async () => {
             const beforeExecBalance = await token.balanceOf(userSA.address);
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
               strategyModule,
               [userSA.address, transaction, signature],
-              ["uint256"],
-              fee
+              ["uint256"]
             );
 
             const wethAfterExecBalance = await WrappedETH.balanceOf(
@@ -1554,10 +1294,6 @@ describe("Uniswap V3", async () => {
             );
 
             expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-            expect(
-              await waffle.provider.getBalance(strategyModule.address)
-            ).to.be.eq(0);
           });
 
           it("max amount", async function () {
@@ -1585,7 +1321,7 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputSingle(address,address,uint24,uint256,uint256,uint160)",
+              "exactOutputSingle(address,address,uint24,uint256,uint256,uint160,uint256)",
               [
                 tokenIn,
                 tokenOut,
@@ -1593,6 +1329,7 @@ describe("Uniswap V3", async () => {
                 amountOut,
                 MAX_UINT256,
                 sqrtPriceLimitX96,
+                now,
               ]
             );
 
@@ -1614,17 +1351,16 @@ describe("Uniswap V3", async () => {
             const beforeExecBalance = await token.balanceOf(userSA.address);
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
               strategyModule,
               [userSA.address, transaction, signature],
-              ["uint256"],
-              fee
+              ["uint256"]
             );
 
             const wethAfterExecBalance = await WrappedETH.balanceOf(
@@ -1644,16 +1380,12 @@ describe("Uniswap V3", async () => {
             );
 
             expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-            expect(
-              await waffle.provider.getBalance(strategyModule.address)
-            ).to.be.eq(0);
           });
         });
       });
       describe("Multi path", function () {
-        describe("Ether in", function () {
-          it("normal", async function () {
+        describe("Ether in ", function () {
+          it("normal [ @skip-on-coverage ]", async function () {
             const { userSA, ecdsaModule, errAbi } = await setupTests();
             const value = ethers.utils.parseEther("1");
             const handler = uniV3handler.address;
@@ -1676,8 +1408,8 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputFromEther(bytes,uint256,uint256)",
-              [path, amountOut, amountInMaximum]
+              "exactOutputFromEther(bytes,uint256,uint256,uint256)",
+              [path, amountOut, amountInMaximum, now]
             );
 
             const { transaction, signature } =
@@ -1696,116 +1428,36 @@ describe("Uniswap V3", async () => {
             );
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
               strategyModule,
               [userSA.address, transaction, signature],
-              ["uint256"],
-              fee
-            );
-
-            const afterExecBalance = await waffle.provider.getBalance(
-              userSA.address
-            );
-
-            expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
-              ethers.BigNumber.from(`${res}`)
-            );
-
-            expect(execRes[0]).to.be.eq(res[0]);
-
-            expect(await token.balanceOf(userSA.address)).to.be.eq(amountOut);
-
-            expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-            expect(
-              await waffle.provider.getBalance(strategyModule.address)
-            ).to.be.eq(0);
-          });
-
-          it("max amount", async function () {
-            const { userSA, ecdsaModule, errAbi } = await setupTests();
-            const value = await waffle.provider.getBalance(userSA.address);
-            const handler = uniV3handler.address;
-            const tokens = [token.address, token2.address, WrappedETH.address];
-            const fees = [
-              ethers.BigNumber.from("500"),
-              ethers.BigNumber.from("3000"),
-            ];
-            const amountOut = ethers.utils.parseEther("1000");
-            const amountInMaximum = value;
-            const path = encodePath(tokens, fees);
-
-            const res = await call(
-              quoter,
-              "quoteExactOutput",
-              [path, amountOut],
               ["uint256"]
             );
 
-            const data = (
-              await ethers.getContractFactory("UniswapV3Handler")
-            ).interface.encodeFunctionData(
-              "exactOutputFromEther(bytes,uint256,uint256)",
-              [path, amountOut, MAX_UINT256]
-            );
-
-            const { transaction, signature } =
-              await buildEcdsaModuleAuthorizedStrategyTx(
-                handler,
-                data,
-                userSA,
-                smartAccountOwner,
-                ecdsaModule.address,
-                strategyModule,
-                value.toString()
-              );
-
-            const beforeExecBalance = await waffle.provider.getBalance(
-              userSA.address
-            );
-
-            try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
-            } catch (error) {
-              fee = decodeError(error, errAbi).args;
-              fee = fee[0];
-            }
-
-            const execRes = await callExecStrategy(
-              strategyModule,
-              [userSA.address, transaction, signature],
-              ["uint256"],
-              fee
-            );
-
             const afterExecBalance = await waffle.provider.getBalance(
               userSA.address
             );
 
-            expect(execRes[0]).to.be.eq(res[0]);
-
             expect(beforeExecBalance.sub(afterExecBalance)).to.be.eq(
-              ethers.BigNumber.from(`${res}`)
+              ethers.BigNumber.from(`${res}`).add(execRes[1])
             );
+
+            expect(execRes[0]).to.be.eq(res[0]);
 
             expect(await token.balanceOf(userSA.address)).to.be.eq(amountOut);
 
             expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-            expect(
-              await waffle.provider.getBalance(strategyModule.address)
-            ).to.be.eq(0);
           });
         });
 
         describe("Ether out", function () {
-          it("normal", async function () {
+          it("normal [ @skip-on-coverage ]", async function () {
             const { userSA, ecdsaModule, errAbi } = await setupTests();
             const value = ethers.utils.parseEther("1");
             const handler = uniV3handler.address;
@@ -1832,8 +1484,8 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputToEther(bytes,uint256,uint256)",
-              [path, amountOut, amountInMaximum]
+              "exactOutputToEther(bytes,uint256,uint256,uint256)",
+              [path, amountOut, amountInMaximum, now]
             );
 
             const { transaction, signature } =
@@ -1854,17 +1506,16 @@ describe("Uniswap V3", async () => {
             );
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
               strategyModule,
               [userSA.address, transaction, signature],
-              ["uint256"],
-              fee
+              ["uint256"]
             );
 
             const afterExecBalance = await token.balanceOf(userSA.address);
@@ -1880,17 +1531,13 @@ describe("Uniswap V3", async () => {
             );
 
             expect(ethAfterExecBalance.sub(ethBeforeExecBalance)).to.be.eq(
-              amountOut
+              amountOut.sub(execRes[1])
             );
 
             expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-            expect(
-              await waffle.provider.getBalance(strategyModule.address)
-            ).to.be.eq(0);
           });
 
-          it("max amount", async function () {
+          it("max amount [ @skip-on-coverage ]", async function () {
             const { userSA, ecdsaModule, errAbi } = await setupTests();
             const value = ethers.utils.parseEther("1");
             const handler = uniV3handler.address;
@@ -1917,8 +1564,8 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutputToEther(bytes,uint256,uint256)",
-              [path, amountOut, MAX_UINT256]
+              "exactOutputToEther(bytes,uint256,uint256,uint256)",
+              [path, amountOut, MAX_UINT256, now]
             );
 
             const { transaction, signature } =
@@ -1939,17 +1586,16 @@ describe("Uniswap V3", async () => {
             );
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
               strategyModule,
               [userSA.address, transaction, signature],
-              ["uint256"],
-              fee
+              ["uint256"]
             );
 
             const afterExecBalance = await token.balanceOf(userSA.address);
@@ -1965,14 +1611,10 @@ describe("Uniswap V3", async () => {
             );
 
             expect(ethAfterExecBalance.sub(ethBeforeExecBalance)).to.be.eq(
-              amountOut
+              amountOut.sub(execRes[1])
             );
 
             expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-            expect(
-              await waffle.provider.getBalance(strategyModule.address)
-            ).to.be.eq(0);
           });
         });
 
@@ -2004,8 +1646,8 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutput(bytes,uint256,uint256)",
-              [path, amountOut, amountInMaximum]
+              "exactOutput(bytes,uint256,uint256,uint256)",
+              [path, amountOut, amountInMaximum, now]
             );
 
             const { transaction, signature } =
@@ -2026,17 +1668,16 @@ describe("Uniswap V3", async () => {
             );
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
               strategyModule,
               [userSA.address, transaction, signature],
-              ["uint256"],
-              fee
+              ["uint256"]
             );
 
             const afterExecBalance = await token.balanceOf(userSA.address);
@@ -2056,10 +1697,6 @@ describe("Uniswap V3", async () => {
             );
 
             expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-            expect(
-              await waffle.provider.getBalance(strategyModule.address)
-            ).to.be.eq(0);
           });
 
           it("max amount", async function () {
@@ -2089,8 +1726,8 @@ describe("Uniswap V3", async () => {
             const data = (
               await ethers.getContractFactory("UniswapV3Handler")
             ).interface.encodeFunctionData(
-              "exactOutput(bytes,uint256,uint256)",
-              [path, amountOut, MAX_UINT256]
+              "exactOutput(bytes,uint256,uint256,uint256)",
+              [path, amountOut, MAX_UINT256, now]
             );
 
             const { transaction, signature } =
@@ -2111,17 +1748,16 @@ describe("Uniswap V3", async () => {
             );
 
             try {
-              await strategyModule.requiredTxFee(userSA.address, transaction);
+              await strategyModule.requiredTxGas(userSA.address, transaction);
             } catch (error) {
               fee = decodeError(error, errAbi).args;
-              fee = fee[0];
+              fee = fee[0].mul(gasPrice);
             }
 
             const execRes = await callExecStrategy(
               strategyModule,
               [userSA.address, transaction, signature],
-              ["uint256"],
-              fee
+              ["uint256"]
             );
 
             const afterExecBalance = await token.balanceOf(userSA.address);
@@ -2141,10 +1777,6 @@ describe("Uniswap V3", async () => {
             );
 
             expect(await token.balanceOf(strategyModule.address)).to.be.eq(0);
-
-            expect(
-              await waffle.provider.getBalance(strategyModule.address)
-            ).to.be.eq(0);
           });
         });
       });
