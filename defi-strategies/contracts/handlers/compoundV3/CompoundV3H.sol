@@ -3,12 +3,14 @@
 
 pragma solidity 0.8.20;
 
-import {BaseHandler, IERC20} from "contracts/handlers/BaseHandler.sol";
+import {BaseHandler, IERC20, SafeERC20} from "contracts/handlers/BaseHandler.sol";
 import {IWrappedNativeToken} from "contracts/handlers/wrappednativetoken/IWrappedNativeToken.sol";
 import {IComet} from "contracts/handlers/compoundV3/IComet.sol";
 import {ICompoundV3Handler} from "contracts/handlers/compoundV3/ICompoundV3H.sol";
 
 contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
+    using SafeERC20 for IERC20;
+
     IWrappedNativeToken public immutable wrappedNativeTokenCompV3;
 
     constructor(address wrappedNativeToken_) {
@@ -195,7 +197,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
         address asset,
         uint256 amount
     ) internal {
-        _tokenApprove(asset, comet, amount);
+        IERC20(asset).forceApprove(comet, amount);
         /* solhint-disable no-empty-blocks */
         try IComet(comet).supplyTo(dst, asset, amount) {} catch Error(
             string memory reason
@@ -204,7 +206,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
         } catch {
             _revertMsg("supply");
         }
-        _tokenApproveZero(asset, comet);
+        IERC20(asset).forceApprove(comet, 0);
     }
 
     function _withdraw(

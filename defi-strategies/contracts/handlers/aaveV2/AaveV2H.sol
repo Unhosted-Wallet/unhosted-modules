@@ -2,12 +2,11 @@
 /// This is developed based on HAaveProtocolV2.sol by Furucombo
 pragma solidity 0.8.20;
 
-import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ILendingPoolV2} from "contracts/handlers/aaveV2/ILendingPoolV2.sol";
 import {ILendingPoolAddressesProviderV2} from "./ILendingPoolAddressesProviderV2.sol";
 import {DataTypes} from "contracts/handlers/aaveV2/libraries/DataTypes.sol";
 import {IWrappedNativeToken} from "contracts/handlers/wrappednativetoken/IWrappedNativeToken.sol";
-import {BaseHandler} from "contracts/handlers/BaseHandler.sol";
+import {BaseHandler, IERC20, SafeERC20} from "contracts/handlers/BaseHandler.sol";
 import {IAaveV2Handler} from "contracts/handlers/aaveV2/IAaveV2H.sol";
 
 contract AaveV2Handler is BaseHandler, IAaveV2Handler {
@@ -119,7 +118,7 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
             .getLendingPool();
 
         for (uint256 i; i < assets.length; ) {
-            _tokenApprove(assets[i], pool, type(uint256).max);
+            IERC20(assets[i]).forceApprove(pool, type(uint256).max);
             unchecked {
                 ++i;
             }
@@ -154,7 +153,7 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
 
         // approve lending pool zero
         for (uint256 i; i < assets.length; ) {
-            _tokenApproveZero(assets[i], pool);
+            IERC20(assets[i]).forceApprove(pool, 0);
             unchecked {
                 ++i;
             }
@@ -176,7 +175,7 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
         uint256 amount
     ) internal returns (uint256 depositAmount) {
         (address pool, address aToken) = _getLendingPoolAndAToken(asset);
-        _tokenApprove(asset, pool, amount);
+        IERC20(asset).forceApprove(pool, amount);
         uint256 beforeATokenAmount = IERC20(aToken).balanceOf(address(this));
 
         /* solhint-disable no-empty-blocks */
@@ -194,7 +193,7 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
                 beforeATokenAmount;
         }
 
-        _tokenApproveZero(asset, pool);
+        IERC20(asset).forceApprove(pool, 0);
     }
 
     function _withdraw(
@@ -223,7 +222,7 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
     ) internal returns (uint256 remainDebt) {
         address pool = ILendingPoolAddressesProviderV2(provider)
             .getLendingPool();
-        _tokenApprove(asset, pool, amount);
+        IERC20(asset).forceApprove(pool, amount);
 
         /* solhint-disable no-empty-blocks */
         try
@@ -233,7 +232,7 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
         } catch {
             _revertMsg("repay");
         }
-        _tokenApproveZero(asset, pool);
+        IERC20(asset).forceApprove(pool, 0);
 
         DataTypes.ReserveData memory reserve = ILendingPoolV2(pool)
             .getReserveData(asset);

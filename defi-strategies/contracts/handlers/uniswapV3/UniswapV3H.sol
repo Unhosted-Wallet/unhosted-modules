@@ -3,8 +3,7 @@
 
 pragma solidity 0.8.20;
 
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {BaseHandler} from "contracts/handlers/BaseHandler.sol";
+import {BaseHandler, SafeERC20, IERC20} from "contracts/handlers/BaseHandler.sol";
 import {IWrappedNativeToken} from "contracts/handlers/wrappednativetoken/IWrappedNativeToken.sol";
 import {ISwapRouter} from "contracts/handlers/uniswapV3/ISwapRouter.sol";
 import {IUniswapV3Handler} from "contracts/handlers/uniswapV3/IUniswapV3H.sol";
@@ -67,9 +66,9 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.deadline = deadline;
 
         // Approve token
-        _tokenApprove(tokenIn, address(router), params.amountIn);
+        IERC20(tokenIn).forceApprove(address(router), params.amountIn);
         amountOut = _exactInputSingle(0, params);
-        _tokenApproveZero(tokenIn, address(router));
+        IERC20(tokenIn).forceApprove(address(router), 0);
         wrappedNativeTokenUniV3.withdraw(amountOut);
     }
 
@@ -93,9 +92,9 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.deadline = deadline;
 
         // Approve token
-        _tokenApprove(tokenIn, address(router), params.amountIn);
+        IERC20(tokenIn).forceApprove(address(router), params.amountIn);
         amountOut = _exactInputSingle(0, params);
-        _tokenApproveZero(tokenIn, address(router));
+        IERC20(tokenIn).forceApprove(address(router), 0);
     }
 
     function exactInputFromEther(
@@ -141,9 +140,9 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.deadline = deadline;
 
         // Approve token
-        _tokenApprove(tokenIn, address(router), params.amountIn);
+        IERC20(tokenIn).forceApprove(address(router), params.amountIn);
         amountOut = _exactInput(0, params);
-        _tokenApproveZero(tokenIn, address(router));
+        IERC20(tokenIn).forceApprove(address(router), 0);
         wrappedNativeTokenUniV3.withdraw(amountOut);
     }
 
@@ -163,9 +162,9 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.deadline = deadline;
 
         // Approve token
-        _tokenApprove(tokenIn, address(router), params.amountIn);
+        IERC20(tokenIn).forceApprove(address(router), params.amountIn);
         amountOut = _exactInput(0, params);
-        _tokenApproveZero(tokenIn, address(router));
+        IERC20(tokenIn).forceApprove(address(router), 0);
     }
 
     function exactOutputSingleFromEther(
@@ -211,9 +210,12 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.deadline = deadline;
 
         // Approve token
-        _tokenApprove(params.tokenIn, address(router), params.amountInMaximum);
+        IERC20(params.tokenIn).forceApprove(
+            address(router),
+            params.amountInMaximum
+        );
         amountIn = _exactOutputSingle(0, params);
-        _tokenApproveZero(params.tokenIn, address(router));
+        IERC20(params.tokenIn).forceApprove(address(router), 0);
         wrappedNativeTokenUniV3.withdraw(params.amountOut);
     }
 
@@ -238,9 +240,12 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.deadline = deadline;
 
         // Approve token
-        _tokenApprove(params.tokenIn, address(router), params.amountInMaximum);
+        IERC20(params.tokenIn).forceApprove(
+            address(router),
+            params.amountInMaximum
+        );
         amountIn = _exactOutputSingle(0, params);
-        _tokenApproveZero(params.tokenIn, address(router));
+        IERC20(params.tokenIn).forceApprove(address(router), 0);
     }
 
     function exactOutputFromEther(
@@ -290,9 +295,9 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.deadline = deadline;
 
         // Approve token
-        _tokenApprove(tokenIn, address(router), params.amountInMaximum);
+        IERC20(tokenIn).forceApprove(address(router), params.amountInMaximum);
         amountIn = _exactOutput(0, params);
-        _tokenApproveZero(tokenIn, address(router));
+        IERC20(tokenIn).forceApprove(address(router), 0);
         wrappedNativeTokenUniV3.withdraw(amountOut);
     }
 
@@ -314,9 +319,9 @@ contract UniswapV3Handler is BaseHandler, IUniswapV3Handler {
         params.deadline = deadline;
 
         // Approve token
-        _tokenApprove(tokenIn, address(router), params.amountInMaximum);
+        IERC20(tokenIn).forceApprove(address(router), params.amountInMaximum);
         amountIn = _exactOutput(0, params);
-        _tokenApproveZero(tokenIn, address(router));
+        IERC20(tokenIn).forceApprove(address(router), 0);
     }
 
     function getContractName()

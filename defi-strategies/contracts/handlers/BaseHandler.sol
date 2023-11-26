@@ -17,26 +17,6 @@ abstract contract BaseHandler {
 
     function getContractName() public pure virtual returns (string memory);
 
-    function _tokenApprove(
-        address token,
-        address spender,
-        uint256 amount
-    ) internal {
-        /* solhint-disable no-empty-blocks */
-        try IERC20Usdt(token).approve(spender, amount) {} catch {
-            IERC20(token).approve(spender, 0);
-            IERC20(token).approve(spender, amount);
-        }
-    }
-
-    function _tokenApproveZero(address token, address spender) internal {
-        if (IERC20Usdt(token).allowance(address(this), spender) > 0) {
-            try IERC20Usdt(token).approve(spender, 0) {} catch {
-                IERC20Usdt(token).approve(spender, 1);
-            }
-        }
-    }
-
     function _getBalance(
         address token,
         uint256 amount
