@@ -291,3 +291,46 @@ export async function makeEcdsaModuleUserOp(
   userOp.signature = signatureWithModuleAddress;
   return userOp;
 }
+
+export async function makeExecModuleUserOp(
+  functionName: string,
+  functionParams: any,
+  userOpSender: string,
+  userOpSigner: Signer,
+  entryPoint: EntryPoint,
+  moduleAddress: string,
+  options?: {
+    preVerificationGas?: number;
+  },
+  nonceKey = 0
+): Promise<UserOperation> {
+  const ExecModule = await ethers.getContractFactory("RecurringExecuteModule");
+
+  const txnDataAA1 = ExecModule.interface.encodeFunctionData(
+    functionName,
+    functionParams
+  );
+
+  const userOp = await fillAndSign(
+    {
+      sender: userOpSender,
+      callData: txnDataAA1,
+      ...options,
+    },
+    userOpSigner,
+    entryPoint,
+    "nonce",
+    true,
+    nonceKey,
+    0
+  );
+
+  // add validator module address to the signature
+  const signatureWithModuleAddress = ethers.utils.defaultAbiCoder.encode(
+    ["bytes", "address"],
+    [userOp.signature, moduleAddress]
+  );
+
+  userOp.signature = signatureWithModuleAddress;
+  return userOp;
+}
