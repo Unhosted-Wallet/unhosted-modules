@@ -1,7 +1,6 @@
 module.exports = {
-  configureYulOptimizer: true,
   skipFiles: [
-  'handlers',
+  'libs',
   'mocks'
 ],
 providerOptions: {
