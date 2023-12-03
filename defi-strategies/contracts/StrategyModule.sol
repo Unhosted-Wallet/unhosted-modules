@@ -31,7 +31,7 @@ contract StrategyModule is
         0x06d4deb91a5dc73a3ea344ed05631460315e2109778b250fdd941893ee92bec8;
 
     // solhint-disable-next-line
-    uint16 internal constant _gasFactor = 5000; // 50%
+    uint16 internal constant _gasFactor = 1000; // 10%
 
     uint256 private immutable CHAIN_ID;
 
