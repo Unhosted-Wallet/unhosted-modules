@@ -115,7 +115,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
         );
 
         // Withdrawal is not allowed
-        if (isBorrowed) {
+        if (!isBorrowed) {
             revert NotAllowed();
         }
     }
@@ -140,7 +140,7 @@ contract CompoundV3Handler is BaseHandler, ICompoundV3Handler {
         );
 
         // Withdrawal is not allowed
-        if (isBorrowed) {
+        if (!isBorrowed) {
             revert NotAllowed();
         }
         wrappedNativeTokenCompV3.withdraw(borrowAmount);
