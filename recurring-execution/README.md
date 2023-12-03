@@ -1,6 +1,5 @@
 # <p align="center"><img src="logo.png" alt="Unhosted" height="100px"></p>
 
-![npm](https://img.shields.io/npm/v/%40unhosted%2Fhandlers?style=for-the-badge)
 ![NPM](https://img.shields.io/npm/l/%40unhosted%2Fhandlers?style=for-the-badge)
 ![Static Badge](https://img.shields.io/badge/framework-hardhat-yellow?style=for-the-badge)
 ![Static Badge](https://img.shields.io/badge/Solidity-0.8.19-orange?style=for-the-badge)
@@ -10,7 +9,7 @@
 
 The recurring execution module empowers the owner of the SA with the capability to schedule a arbitrary data call to a specified receiver address from the wallet. This scheduling can be set on a Daily, Weekly, or Monthly basis within a defined time frame. The execution of any added transaction is open to anyone if the module is enabled on the wallet.
 
-In terms of datetime considerations, the BokkyPooBah's DateTime Library is utilized for validating transactions. The contract has been duplicated from its original repository and is stored in the libs folder. Notably, the contract has the capability to handle leap years, guaranteeing that transfers will consistently execute as anticipated.
+In terms of datetime considerations, the BokkyPooBah's DateTime Library is utilized for validating transactions. The contract has been duplicated from its original [repository](https://github.com/bokkypoobah/BokkyPooBahsDateTimeLibrary) and is stored in the libs folder. Notably, the contract has the capability to handle leap years, guaranteeing that transfers will consistently execute as anticipated.
 
 > [!IMPORTANT]
 >
@@ -28,7 +27,7 @@ In terms of datetime considerations, the BokkyPooBah's DateTime Library is utili
 
 ### Considerations
 
-Once the Strategy Module is enabled, it obtains complete ownership of the SA and the ability to delegate calls for executing any external arbitrary data. The approval mechanism plays a vital role in verifying these strategies.
+Once the Execution Module is enabled, it obtains complete ownership of the SA and the ability to calls for executing any external arbitrary data. This module draws inspiration from the [recurring transfer](https://github.com/safe-global/safe-modules/tree/master/recurring_transfers) module from Safe modules.
 
 ## Running tests
 
