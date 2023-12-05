@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.20;
 
-import "./IUniswapV3SwapCallback.sol";
+import "contracts/handlers/uniswapV3/IUniswapV3SwapCallback.sol";
 
 /// @title Periphery Payments
 /// @notice Functions to ease deposits and withdrawals of ETH

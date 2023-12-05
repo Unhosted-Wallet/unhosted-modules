@@ -25,6 +25,16 @@ jobs:
         run:
           yarn run lint 
         working-directory: ./defi-strategies
+      - name: Create a fake .secret file
+        run: echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
+        working-directory: ./recurring-execution
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile && yarn build
+        working-directory: ./recurring-execution
+      - name: Lint sources
+        run:
+          yarn run lint 
+        working-directory: ./recurring-execution
 
   unit_test:
     name: Unit tests
@@ -51,3 +61,12 @@ jobs:
       - name: Run tests
         run: yarn test
         working-directory: ./defi-strategies
+      - name: Create a fake .secret file
+        run: echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
+        working-directory: ./recurring-execution
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile && yarn build
+        working-directory: ./recurring-execution
+      - name: Run tests
+        run: yarn test
+        working-directory: ./recurring-execution

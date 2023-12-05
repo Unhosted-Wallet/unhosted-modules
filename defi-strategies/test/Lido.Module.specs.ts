@@ -2,7 +2,10 @@ import { expect } from "chai";
 import { Contract } from "ethers";
 import { decodeError } from "ethers-decode-error";
 import hardhat, { ethers, deployments, waffle } from "hardhat";
-import { buildEcdsaModuleAuthorizedStrategyTx } from "./utils/execution";
+import {
+  buildEcdsaModuleAuthorizedStrategyTx,
+  callExecStrategy,
+} from "./utils/execution";
 import { makeEcdsaModuleUserOp } from "./utils/userOp";
 import { LIDO_PROXY, LIDO_REFERRAL_ADDRESS } from "./utils/constants_eth";
 import { MAX_UINT256 } from "./utils/constants";
@@ -26,6 +29,7 @@ describe("Lido Finance", async () => {
   let lidoHandler: Contract;
   let stETH: Contract;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
@@ -123,26 +127,27 @@ describe("Lido Finance", async () => {
           smartAccountOwner,
           ecdsaModule.address,
           strategyModule,
-          value
+          value.toString()
         );
 
       const beforeExecBalance = await stETH.balanceOf(userSA.address);
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
-      await strategyModule.execStrategy(
-        userSA.address,
-        transaction,
-        signature,
-        { value: fee }
+      const execRes = await callExecStrategy(
+        strategyModule,
+        [userSA.address, transaction, signature],
+        ["uint256"]
       );
 
       const afterExecBalance = await stETH.balanceOf(userSA.address);
+
+      expect(afterExecBalance.sub(beforeExecBalance)).to.be.eq(execRes[0]);
 
       expect(afterExecBalance.sub(beforeExecBalance)).to.be.within(
         value.sub(10),
@@ -150,60 +155,6 @@ describe("Lido Finance", async () => {
       );
 
       expect(await stETH.balanceOf(strategyModule.address)).to.be.eq(0);
-
-      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
-        0
-      );
-    });
-
-    it("max amount", async function () {
-      const { userSA, ecdsaModule, errAbi } = await setupTests();
-      const handler = lidoHandler.address;
-      const value = await waffle.provider.getBalance(userSA.address);
-
-      const data = (
-        await ethers.getContractFactory("LidoHandler")
-      ).interface.encodeFunctionData("submit(uint256)", [MAX_UINT256]);
-
-      const { transaction, signature } =
-        await buildEcdsaModuleAuthorizedStrategyTx(
-          handler,
-          data,
-          userSA,
-          smartAccountOwner,
-          ecdsaModule.address,
-          strategyModule,
-          value
-        );
-
-      const beforeExecBalance = await stETH.balanceOf(userSA.address);
-
-      try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
-      } catch (error) {
-        fee = decodeError(error, errAbi).args;
-        fee = fee[0];
-      }
-
-      await strategyModule.execStrategy(
-        userSA.address,
-        transaction,
-        signature,
-        { value: fee }
-      );
-
-      const afterExecBalance = await stETH.balanceOf(userSA.address);
-
-      expect(afterExecBalance.sub(beforeExecBalance)).to.be.within(
-        value.sub(10),
-        value
-      );
-
-      expect(await stETH.balanceOf(strategyModule.address)).to.be.eq(0);
-
-      expect(await waffle.provider.getBalance(strategyModule.address)).to.be.eq(
-        0
-      );
     });
   });
 });

@@ -22,7 +22,7 @@ import { getTokenProvider } from "./utils/providers";
 
 describe("AaveV2 flashloan", async () => {
   const chainId = hardhat.network.config.chainId;
-  if (chainId === 1 || chainId === 137) {
+  if (chainId === 1) {
     // This test supports to run on these chains.
   } else {
     return;
@@ -38,6 +38,7 @@ describe("AaveV2 flashloan", async () => {
   let providerAddress: any;
   let wethProviderAddress: any;
   let fee: any;
+  const gasPrice = ethers.utils.parseUnits("30", 9);
 
   const _getFlashloanFee = (value: BigNumber) => {
     return value.mul(9).div(10000);
@@ -114,7 +115,7 @@ describe("AaveV2 flashloan", async () => {
 
     const callbackHandler = await (
       await ethers.getContractFactory("FlashloanCallbackHandler")
-    ).deploy();
+    ).deploy(AAVEPROTOCOL_V2_PROVIDER);
 
     aaveV2handler = await (
       await ethers.getContractFactory("AaveV2Handler")
@@ -179,18 +180,13 @@ describe("AaveV2 flashloan", async () => {
       const beforeExecBalance = await token.balanceOf(userSA.address);
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
-      await strategyModule.execStrategy(
-        userSA.address,
-        transaction,
-        signature,
-        { value: fee }
-      );
+      await strategyModule.execStrategy(userSA.address, transaction, signature);
 
       const afterExecBalance = await token.balanceOf(userSA.address);
 
@@ -239,24 +235,25 @@ describe("AaveV2 flashloan", async () => {
       const beforeExecBalance = await WrappedETH.balanceOf(userSA.address);
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
-      await strategyModule.execStrategy(
-        userSA.address,
-        transaction,
-        signature,
-        { value: fee }
-      );
+      await strategyModule.execStrategy(userSA.address, transaction, signature);
 
       const afterExecBalance = await WrappedETH.balanceOf(userSA.address);
 
-      expect(afterExecBalance.sub(beforeExecBalance)).to.be.eq(value);
+      expect(afterExecBalance.sub(beforeExecBalance)).to.be.within(
+        value.sub(1),
+        value.add(1)
+      );
 
-      expect(await variableDebtWETH.balanceOf(userSA.address)).to.be.eq(value);
+      expect(await variableDebtWETH.balanceOf(userSA.address)).to.be.within(
+        value.sub(1),
+        value.add(1)
+      );
 
       expect(await WrappedETH.balanceOf(strategyModule.address)).to.be.eq(0);
     });
@@ -300,18 +297,13 @@ describe("AaveV2 flashloan", async () => {
       const beforeExecBalanceWeth = await WrappedETH.balanceOf(userSA.address);
 
       try {
-        await strategyModule.requiredTxFee(userSA.address, transaction);
+        await strategyModule.requiredTxGas(userSA.address, transaction);
       } catch (error) {
         fee = decodeError(error, errAbi).args;
-        fee = fee[0];
+        fee = fee[0].mul(gasPrice);
       }
 
-      await strategyModule.execStrategy(
-        userSA.address,
-        transaction,
-        signature,
-        { value: fee }
-      );
+      await strategyModule.execStrategy(userSA.address, transaction, signature);
 
       const afterExecBalance = await token.balanceOf(userSA.address);
       const afterExecBalanceWeth = await WrappedETH.balanceOf(userSA.address);

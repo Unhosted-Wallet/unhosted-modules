@@ -1,9 +1,12 @@
 module.exports = {
+  mocha: {
+    grep: "@skip-on-coverage",
+    invert: true
+  },
   configureYulOptimizer: true,
   skipFiles: [
-  'smart-contract-wallet/test',
-  'smart-contract-wallet/SmartAccountNoAuth.sol',
-  'smart-contract-wallet/utils',
+  'handlers',
+  'mocks'
 ],
 providerOptions: {
   allowUnlimitedContractSize: true,

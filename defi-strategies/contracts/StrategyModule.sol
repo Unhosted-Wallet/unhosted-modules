@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
-import {ISignatureValidator, ISignatureValidatorConstants} from "./interfaces/ISignatureValidator.sol";
-import {Enum} from "./common/Enum.sol";
-import {ReentrancyGuard} from "./common/ReentrancyGuard.sol";
+import {ISignatureValidator, ISignatureValidatorConstants} from "contracts/interfaces/ISignatureValidator.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {IExecFromModule, IStrategyModule} from "./interfaces/IStrategyModule.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {IExecFromModule, IStrategyModule, Enum} from "contracts/interfaces/IStrategyModule.sol";
 
 /**
- * @title Defi Base Strategy module for Biconomy Smart Accounts.
+ * @title Strategy module for Biconomy Smart Accounts.
  * @dev Compatible with Biconomy Modular Interface v 0.1
- * - It allows to delegate call to external defi strategy contracts and execute arbitrary data.
+ * - It allows to delegate call to external handler contracts and execute arbitrary data.
  * - EIP-1271 compatible (checks if the signer is the owner).
  * @author M. Zakeri Rad - <@zakrad>
  */
@@ -22,9 +20,9 @@ contract StrategyModule is
     ISignatureValidatorConstants,
     IStrategyModule
 {
-    // Domain Seperators keccak256("EIP712Domain(uint256 chainId,address verifyingContract)");
+    // Domain Seperators keccak256("EIP712Domain(uint256 chainId,address verifyingContract,bytes32 salt)");
     bytes32 internal constant DOMAIN_SEPARATOR_TYPEHASH =
-        0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
+        0x71062c282d40422f744945d587dbf4ecfd4f9cfad1d35d62c944373009d96162;
 
     //ExecuteStrategy
     // solhint-disable-next-line
@@ -33,11 +31,7 @@ contract StrategyModule is
         0x06d4deb91a5dc73a3ea344ed05631460315e2109778b250fdd941893ee92bec8;
 
     // solhint-disable-next-line
-    address internal constant _gasFeed =
-        0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C;
-
-    // solhint-disable-next-line
-    uint16 internal constant _feeFactor = 5000; // 50%
+    uint16 internal constant _gasFactor = 1000; // 10%
 
     uint256 private immutable CHAIN_ID;
 
@@ -51,11 +45,15 @@ contract StrategyModule is
 
     error AlreadyInitialized();
     error AddressCanNotBeZero();
+    error NotAuthorized();
+    error TransferFailed(uint256);
     error RevertEstimation(uint256);
 
     constructor() {
         CHAIN_ID = block.chainid;
     }
+
+    receive() external payable {}
 
     function init(
         address beneficiary_,
@@ -71,14 +69,18 @@ contract StrategyModule is
     }
 
     /**
-     * it can call any arbitrary logic from handler without any confirmation if the
-     * module is enabled and SA owner signed the data
+     * @dev See {IStrategyModule-execStrategy}.
      */
     function execStrategy(
         address smartAccount,
         StrategyTransaction memory _tx,
         bytes memory signatures
-    ) public payable virtual nonReentrant returns (bool success) {
+    )
+        public
+        virtual
+        nonReentrant
+        returns (uint256 gasUsed, bool executed, bytes memory returnData)
+    {
         bytes32 txHash;
 
         {
@@ -101,56 +103,60 @@ contract StrategyModule is
 
         {
             uint256 startGas = gasleft();
-            success = IExecFromModule(smartAccount).execTransactionFromModule(
-                handler,
-                _tx.value,
-                _tx.data,
-                Enum.Operation.DelegateCall,
-                _tx.gas
-            );
-            uint256 used = (startGas - gasleft());
+            (executed, returnData) = IExecFromModule(smartAccount)
+                .execTransactionFromModuleReturnData(
+                    handler,
+                    _tx.value,
+                    _tx.data,
+                    Enum.Operation.DelegateCall
+                );
+            gasUsed = ((startGas - gasleft()) * _gasFactor) / 1e4;
 
-            (, int256 answer, , , ) = AggregatorV3Interface(_gasFeed)
-                .latestRoundData();
-            used = (used * uint256(answer) * _feeFactor) / 1e4;
-
-            payable(beneficiary).transfer(used);
-            payable(msg.sender).transfer(msg.value - used);
+            bool success = IExecFromModule(smartAccount)
+                .execTransactionFromModule(
+                    address(this),
+                    gasUsed * tx.gasprice,
+                    "",
+                    Enum.Operation.Call
+                );
+            if (!success) {
+                revert TransferFailed(gasUsed);
+            }
         }
     }
 
     /**
-     * @dev Allows to estimate a transaction.
-     * This method is for estimation only, it will always revert and encode the result in the revert data.
-     * Call this method to get an estimate of the execTransactionFromModule costs that are deducted with `execStrategy`
+     * @dev See {IStrategyModule-requiredTxGas}.
      */
-    function requiredTxFee(
-        address strategyModule,
+    function requiredTxGas(
+        address smartAccount,
         StrategyTransaction memory _tx
     ) public {
         uint256 startGas = gasleft();
 
-        IExecFromModule(strategyModule).execTransactionFromModule(
+        IExecFromModule(smartAccount).execTransactionFromModuleReturnData(
             handler,
             _tx.value,
             _tx.data,
-            Enum.Operation.DelegateCall,
-            _tx.gas
+            Enum.Operation.DelegateCall
         );
-        uint256 used = (startGas - gasleft());
+        uint256 gasUsed = (startGas - gasleft());
 
-        (, int256 answer, , , ) = AggregatorV3Interface(_gasFeed)
-            .latestRoundData();
-
-        used = (used * uint256(answer) * _feeFactor) / 1e4;
-        revert RevertEstimation(used);
+        revert RevertEstimation((gasUsed * _gasFactor) / 1e4);
     }
 
     /**
-     * @dev Returns hash to be signed by owner.
-     * @param _nonce Transaction nonce.
-     * @param smartAccount Address of the Smart Account to execute the txn.
-     * @return Transaction hash.
+     * @dev See {IStrategyModule-claim}.
+     */
+    function claim() public {
+        if (msg.sender != beneficiary) {
+            revert NotAuthorized();
+        }
+        beneficiary.call{value: address(this).balance}("");
+    }
+
+    /**
+     * @dev See {IStrategyModule-getTransactionHash}.
      */
     function getTransactionHash(
         StrategyTransaction calldata _tx,
@@ -161,11 +167,7 @@ contract StrategyModule is
     }
 
     /**
-     * @dev Returns the bytes that are hashed to be signed by owner.
-     * @param smartAccount Address of the Smart Account to execute the txn.
-     * @param _tx The strategy transaction data to be signed.
-     * @param _nonce Transaction nonce.
-     * @return strategyHash bytes that are hashed to be signed by the owner.
+     * @dev See {IStrategyModule-encodeStrategyData}.
      */
     function encodeStrategyData(
         address smartAccount,
@@ -191,9 +193,7 @@ contract StrategyModule is
     }
 
     /**
-     * @dev returns a value from the nonces 2d mapping
-     * @param smartAccount address of smart account to get nonce
-     * @return nonce : the number of transactions made by smart account
+     * @dev See {IStrategyModule-getNonce}.
      */
     function getNonce(
         address smartAccount
@@ -202,22 +202,24 @@ contract StrategyModule is
     }
 
     /**
-     * @dev Returns the domain separator for this contract, as defined in the EIP-712 standard.
-     * @param smartAccount Address of the Smart Account as verifying contract address
-     * @return bytes32 The domain separator hash.
+     * @dev See {IStrategyModule-domainSeparator}.
      */
     function domainSeparator(
         address smartAccount
     ) public view returns (bytes32) {
         return
             keccak256(
-                abi.encode(DOMAIN_SEPARATOR_TYPEHASH, CHAIN_ID, smartAccount)
+                abi.encode(
+                    DOMAIN_SEPARATOR_TYPEHASH,
+                    CHAIN_ID,
+                    address(this),
+                    bytes32(uint256(uint160(smartAccount)))
+                )
             );
     }
 
     /**
-     * @notice Returns the ID of the chain the contract is currently deployed on.
-     * @return CHAIN_ID The ID of the current chain as a uint256.
+     * @dev See {IStrategyModule-getChainId}.
      */
     function getChainId() public view returns (uint256) {
         return CHAIN_ID;

@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 /**
- * @title Proxy // This is the user's Smart Account
+ * @title Proxy // This is the Strategy Module
  * @notice Basic proxy that delegates all calls to a fixed implementation contract.
- * @dev    Implementation address is stored in the slot defined by the Proxy's address
+ * @dev Implementation address is stored in the slot defined by the Proxy's address
  */
 contract Proxy {
+    error InvalidAddress();
+
     constructor(address _implementation) {
-        require(
-            _implementation != address(0),
-            "Invalid implementation address"
-        );
+        if (_implementation == address(0)) {
+            revert InvalidAddress();
+        }
         assembly {
             sstore(address(), _implementation)
         }

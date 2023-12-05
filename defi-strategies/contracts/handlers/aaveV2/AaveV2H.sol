@@ -2,13 +2,12 @@
 /// This is developed based on HAaveProtocolV2.sol by Furucombo
 pragma solidity 0.8.20;
 
-import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ILendingPoolV2} from "./ILendingPoolV2.sol";
+import {ILendingPoolV2} from "contracts/handlers/aaveV2/ILendingPoolV2.sol";
 import {ILendingPoolAddressesProviderV2} from "./ILendingPoolAddressesProviderV2.sol";
-import {DataTypes} from "./libraries/DataTypes.sol";
-import {IWrappedNativeToken} from "../wrappednativetoken/IWrappedNativeToken.sol";
-import {BaseHandler} from "../BaseHandler.sol";
-import {IAaveV2Handler} from "./IAaveV2H.sol";
+import {DataTypes} from "contracts/handlers/aaveV2/libraries/DataTypes.sol";
+import {IWrappedNativeToken} from "contracts/handlers/wrappednativetoken/IWrappedNativeToken.sol";
+import {BaseHandler, IERC20, SafeERC20} from "contracts/handlers/BaseHandler.sol";
+import {IAaveV2Handler} from "contracts/handlers/aaveV2/IAaveV2H.sol";
 
 contract AaveV2Handler is BaseHandler, IAaveV2Handler {
     using SafeERC20 for IERC20;
@@ -106,26 +105,23 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
         uint256[] calldata modes,
         bytes calldata params
     ) public payable {
-        _requireMsg(
-            assets.length == amounts.length,
-            "flashLoan",
-            "assets and amounts do not match"
-        );
-
-        _requireMsg(
-            assets.length == modes.length,
-            "flashLoan",
-            "assets and modes do not match"
-        );
-
+        {
+            uint256 length = assets.length;
+            if (length != amounts.length || length != modes.length) {
+                revert NoArrayParity();
+            }
+        }
         address handler;
         address flashloanHandler = fallbackHandler;
         address onBehalfOf = address(this);
         address pool = ILendingPoolAddressesProviderV2(provider)
             .getLendingPool();
 
-        for (uint256 i = 0; i < assets.length; i++) {
-            _tokenApprove(assets[i], pool, type(uint256).max);
+        for (uint256 i; i < assets.length; ) {
+            IERC20(assets[i]).forceApprove(pool, type(uint256).max);
+            unchecked {
+                ++i;
+            }
         }
 
         assembly {
@@ -156,8 +152,11 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
         }
 
         // approve lending pool zero
-        for (uint256 i = 0; i < assets.length; i++) {
-            _tokenApproveZero(assets[i], pool);
+        for (uint256 i; i < assets.length; ) {
+            IERC20(assets[i]).forceApprove(pool, 0);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -168,7 +167,7 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
         override
         returns (string memory)
     {
-        return "HAaveProtocolV2";
+        return "AaveV2H";
     }
 
     function _deposit(
@@ -176,7 +175,7 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
         uint256 amount
     ) internal returns (uint256 depositAmount) {
         (address pool, address aToken) = _getLendingPoolAndAToken(asset);
-        _tokenApprove(asset, pool, amount);
+        IERC20(asset).forceApprove(pool, amount);
         uint256 beforeATokenAmount = IERC20(aToken).balanceOf(address(this));
 
         /* solhint-disable no-empty-blocks */
@@ -194,7 +193,7 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
                 beforeATokenAmount;
         }
 
-        _tokenApproveZero(asset, pool);
+        IERC20(asset).forceApprove(pool, 0);
     }
 
     function _withdraw(
@@ -223,7 +222,7 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
     ) internal returns (uint256 remainDebt) {
         address pool = ILendingPoolAddressesProviderV2(provider)
             .getLendingPool();
-        _tokenApprove(asset, pool, amount);
+        IERC20(asset).forceApprove(pool, amount);
 
         /* solhint-disable no-empty-blocks */
         try
@@ -233,7 +232,7 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
         } catch {
             _revertMsg("repay");
         }
-        _tokenApproveZero(asset, pool);
+        IERC20(asset).forceApprove(pool, 0);
 
         DataTypes.ReserveData memory reserve = ILendingPoolV2(pool)
             .getReserveData(asset);
@@ -270,11 +269,9 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
             DataTypes.ReserveData memory data
         ) {
             aToken = data.aTokenAddress;
-            _requireMsg(
-                aToken != address(0),
-                "General",
-                "aToken should not be zero address"
-            );
+            if (aToken == address(0)) {
+                revert InvalidAddress();
+            }
         } catch Error(string memory reason) {
             _revertMsg("General", reason);
         } catch {

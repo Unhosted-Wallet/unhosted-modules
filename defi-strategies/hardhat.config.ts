@@ -44,7 +44,12 @@ const config: HardhatUserConfig = {
         version: "0.8.20",
         settings: {
           optimizer: { enabled: true, runs: 800 },
-          viaIR: true,
+        },
+      },
+      {
+        version: "0.8.19",
+        settings: {
+          optimizer: { enabled: true, runs: 800 },
         },
       },
     ],
@@ -65,8 +70,8 @@ const config: HardhatUserConfig = {
               path: "m/44'/60'/0'/0",
               initialIndex: 0,
             },
-            initialBaseFeePerGas: 0,
-            gasPrice: 0,
+            initialBaseFeePerGas: parseUnits("30", "gwei").toNumber(),
+            gasPrice: parseUnits("30", "gwei").toNumber(),
             gas: 3000000,
           }
         : {
@@ -78,6 +83,24 @@ const config: HardhatUserConfig = {
             allowUnlimitedContractSize: true,
             chainId: 31337,
           }),
+    },
+    mumbai: {
+      url: `${process.env.TESTNET_ARCHIVAL_RPC}`,
+      accounts: [
+        `${
+          process.env.TESTNET_PRIVATE_KEY ||
+          "0x0000000000000000000000000000000000000000000000000000000000000000"
+        }`,
+      ],
+    },
+    goerli: {
+      url: `${process.env.GOERLI_ARCHIVAL_RPC}`,
+      accounts: [
+        `${
+          process.env.TESTNET_PRIVATE_KEY ||
+          "0x0000000000000000000000000000000000000000000000000000000000000000"
+        }`,
+      ],
     },
     hardhat_node: {
       live: false,
@@ -111,6 +134,11 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY || "",
+      goerli: process.env.ETHERSCAN_API_KEY || "",
+      bsc: process.env.BSC_API_KEY || "",
+      bscTestnet: process.env.BSC_TESTNET_API_KEY || "",
+      polygon: process.env.POLYGON_API_KEY || "",
+      polygonMumbai: process.env.POLYGON_API_KEY || "",
     },
   },
 };
