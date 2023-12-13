@@ -15,6 +15,13 @@ abstract contract BaseHandler {
     bytes32 internal constant FALLBACK_HANDLER_STORAGE_SLOT =
         0x6c9a6c4a39284e37ed1cf53d337577d14212a4870fb976a4366c693b939918d4;
 
+    error InvalidPathSize();
+    error InvalidAddress();
+    error NoArrayParity();
+    error InvalidAmount();
+    error InvalidComet();
+    error NotAllowed();
+
     function getContractName() public pure virtual returns (string memory);
 
     function _getBalance(
