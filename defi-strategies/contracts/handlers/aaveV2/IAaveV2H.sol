@@ -3,9 +3,6 @@
 pragma solidity 0.8.20;
 
 interface IAaveV2Handler {
-    error NoArrayParity();
-    error InvalidAddress();
-
     function deposit(
         address asset,
         uint256 amount
