@@ -2,13 +2,6 @@ import { expect } from "chai";
 import { Contract } from "ethers";
 import { AddressZero } from "@ethersproject/constants";
 import { ethers, deployments, waffle } from "hardhat";
-import {
-  getEntryPoint,
-  getEcdsaOwnershipRegistryModule,
-  getSmartAccountWithModule,
-  getStrategyModule,
-} from "./utils/setupHelper";
-import { makeEcdsaModuleUserOp } from "./utils/userOp";
 
 let deployer;
 let mockCaller;
@@ -20,41 +13,6 @@ describe("Strategy Factory", async () => {
 
   const setupTests = deployments.createFixture(async ({ deployments }) => {
     await deployments.fixture();
-
-    const entryPoint = await getEntryPoint();
-    const ecdsaModule = await getEcdsaOwnershipRegistryModule();
-    const EcdsaOwnershipRegistryModule = await ethers.getContractFactory(
-      "EcdsaOwnershipRegistryModule"
-    );
-
-    const ecdsaOwnershipSetupData =
-      EcdsaOwnershipRegistryModule.interface.encodeFunctionData(
-        "initForSmartAccount",
-        [await deployer.getAddress()]
-      );
-    const smartAccountDeploymentIndex = 0;
-    const userSA = await getSmartAccountWithModule(
-      ecdsaModule.address,
-      ecdsaOwnershipSetupData,
-      smartAccountDeploymentIndex
-    );
-
-    // send funds to userSA and mint tokens
-    await deployer.sendTransaction({
-      to: userSA.address,
-      value: ethers.utils.parseEther("10"),
-    });
-
-    const userOp = await makeEcdsaModuleUserOp(
-      "deployStrategyModule",
-      [deployer.address, deployer.address, 0],
-      userSA.address,
-      deployer,
-      entryPoint,
-      ecdsaModule.address
-    );
-
-    await entryPoint.handleOps([userOp], mockCaller.address);
 
     implementation = await (
       await ethers.getContractFactory("StrategyModule")
