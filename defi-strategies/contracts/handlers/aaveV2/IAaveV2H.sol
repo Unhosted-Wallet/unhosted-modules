@@ -43,9 +43,9 @@ interface IAaveV2Handler {
     function borrowETH(uint256 amount, uint256 rateMode) external payable;
 
     function flashLoan(
-        address[] calldata assets,
-        uint256[] calldata amounts,
-        uint256[] calldata modes,
-        bytes calldata params
+        address[] memory assets,
+        uint256[] memory amounts,
+        uint256[] memory modes,
+        bytes memory params
     ) external payable;
 }

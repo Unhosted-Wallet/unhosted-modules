@@ -100,10 +100,10 @@ contract AaveV2Handler is BaseHandler, IAaveV2Handler {
     }
 
     function flashLoan(
-        address[] calldata assets,
-        uint256[] calldata amounts,
-        uint256[] calldata modes,
-        bytes calldata params
+        address[] memory assets,
+        uint256[] memory amounts,
+        uint256[] memory modes,
+        bytes memory params
     ) public payable {
         {
             uint256 length = assets.length;
