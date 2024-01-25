@@ -26,7 +26,7 @@ jobs:
           yarn run lint 
         working-directory: ./defi-strategies
       - name: Install dependencies
-        run: yarn install --frozen-lockfile && yarn build
+        run: yarn install
         working-directory: ./strategy-module
       - name: Lint sources
         run:
@@ -77,3 +77,31 @@ jobs:
       - name: Run tests
         run: yarn test
         working-directory: ./recurring-execution
+  check:
+    strategy:
+      fail-fast: true
+      
+    name: Foundry project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      
+      - name: Run Forge build
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+        working-directory: ./strategy-module
+      
+      - name: Run Forge tests
+        run: |
+         forge test -vvv
+        id: test
+        working-directory: ./strategy-module
