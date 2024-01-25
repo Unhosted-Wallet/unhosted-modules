@@ -19,11 +19,12 @@ import {
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {UserOperation, IAccount} from "I4337/interfaces/IAccount.sol";
 import {IUniswapV3Factory} from "test/interfaces/IUniswapV3Factory.sol";
-import {StrategyModule, Enum} from "src/StrategyModule.sol";
+import {StrategyModule, Enum, ReentrancyGuard} from "src/StrategyModule.sol";
 import {IStrategyModule} from "src/interfaces/IStrategyModule.sol";
 import {ISwapRouter} from "test/interfaces/ISwapRouter.sol";
 
 import "src/mocks/MockERC20.sol";
+import "src/mocks/MockStrategy.sol";
 import "src/mocks/MockTrigger.sol";
 import "forge-std/console.sol";
 
@@ -33,6 +34,7 @@ contract StrategyModuleTest is BiconomyTest {
     StrategyModule stratModule;
     ISwapRouter uniStrat;
     MockTrigger trigger;
+    MockStrategy mockStrat;
     MockERC20 usdc;
     MockERC20 WETH;
 
@@ -53,15 +55,16 @@ contract StrategyModuleTest is BiconomyTest {
         setAccount();
         (unhosted, unhostedKey) = makeAddrAndKey("Unhosted");
 
-        uniStrat = ISwapRouter(UNISWAPV3_ROUTER);
-        trigger = new MockTrigger();
-
         vm.prank(unhosted);
         stratModule = new StrategyModule("StrategyModule", "0.2.0");
         stratModule.domainSeparator();
 
         usdc = MockERC20(USDC);
         WETH = MockERC20(WRAPPED_NATIVE_TOKEN);
+
+        uniStrat = ISwapRouter(UNISWAPV3_ROUTER);
+        trigger = new MockTrigger();
+        mockStrat = new MockStrategy(address(stratModule));
 
         createAccount(owner);
         UserOperation memory op = fillUserOp(
@@ -107,6 +110,44 @@ contract StrategyModuleTest is BiconomyTest {
 
         assertEq(stratModule.devFee(), 20000);
         assertEq(stratModule.unhostedFee(), 20000);
+    }
+
+    function testReentrancy() external {
+        stratModule.updateStrategy(address(mockStrat), owner);
+
+        bytes memory data = abi.encodeWithSelector(
+            mockStrat.reEnter.selector
+        );
+
+        IStrategyModule.StrategyTransaction memory _tx = IStrategyModule.StrategyTransaction(Enum.Operation.Call, address(mockStrat), 0, data);
+
+        bytes32 hash = stratModule.getStrategyTxHash(
+            _tx,
+            stratModule.getNonce(address(account))
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(key, hash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        (bool executed, , bytes memory revertData) = stratModule.executeStrategy(address(account), _tx, signature);
+        assert(bytes4(revertData) == ReentrancyGuard.ReentrancyGuardReentrantCall.selector);
+        assert(!executed);
+
+        data = abi.encodeWithSelector(
+            mockStrat.reEnterTrigger.selector
+        );
+
+        _tx = IStrategyModule.StrategyTransaction(Enum.Operation.Call, address(mockStrat), 0, data);
+
+        hash = stratModule.getStrategyTxHash(
+            _tx,
+            stratModule.getNonce(address(account))
+        );
+        (v, r, s) = vm.sign(key, hash);
+        signature = abi.encodePacked(r, s, v);
+
+        (executed, , revertData) = stratModule.executeStrategy(address(account), _tx, signature);
+        assert(bytes4(revertData) == ReentrancyGuard.ReentrancyGuardReentrantCall.selector);
+        assert(!executed);
     }
 
     function testExecuteStrategy() external {
@@ -230,6 +271,59 @@ contract StrategyModuleTest is BiconomyTest {
         stratModule.executeTriggeredStrategy(address(account), _tx2, signature2);
     }
 
+    function testInvalidStrategyExecution() external {
+        vm.prank(owner);
+        stratModule.updateStrategy(address(uniStrat), address(0));
+        uint256 value = 1000e6;
+        address provider = uniV3Factory.getPool(USDC, WRAPPED_NATIVE_TOKEN, 500);
+        vm.startPrank(provider);
+        usdc.transfer(address(account), value);
+        vm.stopPrank();
+        
+        UserOperation memory op = fillUserOp(
+            fillData(
+                address(usdc),
+                0,
+                abi.encodeWithSelector(MockERC20.approve.selector, address(uniStrat), value)
+            )
+        );
+        executeUserOp(op, "approve usdc", 0);
+
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams(USDC, WRAPPED_NATIVE_TOKEN, 3000, address(account), block.timestamp, value, 0, 0);
+
+        bytes memory data = abi.encodeWithSelector(
+            uniStrat.exactInputSingle.selector, params
+        );
+
+        IStrategyModule.StrategyTransaction memory _tx = IStrategyModule.StrategyTransaction(Enum.Operation.Call, address(uniStrat), 0, data);
+
+        bytes32 hash = stratModule.getStrategyTxHash(
+            _tx,
+            stratModule.getNonce(address(account))
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(key, hash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        vm.expectRevert(StrategyModule.InvalidStrategy.selector);
+        stratModule.executeStrategy(address(account), _tx, signature);
+
+        bytes memory triggerData = abi.encodeWithSelector(
+            MockTrigger.hasEnoughBalance.selector, USDC, address(account), value
+        );
+
+        IStrategyModule.TriggeredStrategyTransaction memory _tx2 = IStrategyModule.TriggeredStrategyTransaction(Enum.Operation.Call, address(uniStrat), 0, data, address(trigger), triggerData);
+
+        bytes32 hash2 = stratModule.getTriggeredStrategyTxHash(
+            _tx2,
+            stratModule.getNonce(address(account))
+        );
+        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(key, hash2);
+        bytes memory signature2 = abi.encodePacked(r2, s2, v2);
+
+        vm.expectRevert(StrategyModule.InvalidStrategy.selector);
+        stratModule.executeTriggeredStrategy(address(account), _tx2, signature2);
+    }
+
     function testTriggeredExecuteStrategy() external {
         uint256 value = 1000e6;
         address provider = uniV3Factory.getPool(USDC, WRAPPED_NATIVE_TOKEN, 500);
@@ -327,7 +421,7 @@ contract StrategyModuleTest is BiconomyTest {
 
         uint256 wethBefore = WETH.balanceOf(address(account));
         uint256 usdcBefore = usdc.balanceOf(address(account));
-        console.log();
+        
         vm.expectRevert();
         stratModule.executeTriggeredStrategy(address(account), _tx, signature);
     }
