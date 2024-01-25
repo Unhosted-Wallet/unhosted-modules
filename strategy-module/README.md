@@ -1,66 +1,94 @@
-## Foundry
+# <p align="center"><img src="logo.png" alt="Unhosted" height="100px"></p>
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+![Static Badge](https://img.shields.io/badge/framework-foundry-yellow?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/Solidity-0.8.20-orange?style=for-the-badge)
+![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/unh0sted?style=for-the-badge)
 
-Foundry consists of:
+# Strategy Module
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+Strategy Module, empowering smart accounts to utilize `call` and `delegatecall` for executing arbitrary logic. This opens the door to lots of functionalities, from automated wallets to streamlined one-click DeFi strategies. Developers can seamlessly add strategy contracts through the `updateStrategy` function, this provides an open platform for anyone to contribute their strategies and earn a percentage as both a developer fee and wallet provider fee.
 
-## Documentation
+## Execute Strategy
 
-https://book.getfoundry.sh/
+There are two execution functionalities available: `executeStrategy` and `executeTriggeredStrategy`. In the triggered strategy, the owner can define a specific on-chain criterion that must be met before actual execution. This require a trigger contract to be called, which can be provided by either the user or the wallet provider. The assigned developer of the strategy will earn a percentage of the execution gas usage, determined by the complexity of the on-chain execution.
 
-## Usage
+To execute arbitrary data, the module strategy module must be enabled, and the strategy transaction must be signed by the Smart Account (SA) owner.
 
-### Build
+The strategy module signatures are EIP-712 based. And uses the following scheme:
 
-```shell
-$ forge build
+- EIP712Domain
+
+```json
+{
+  "EIP712Domain": [
+    { "type": "string", "name": "name" },
+    { "type": "string", "name": "version" },
+    { "type": "uint256", "name": "chainId" },
+    { "type": "address", "name": "verifyingContract" }
+  ]
+}
 ```
 
-### Test
+- ExecuteStrategy
+  - `operation` is the type of call
+  - `strategy` is the strategy contract for execution
+  - `value` is the value to send with execution
+  - `strategyData` is the arbitrary data to execute
+  - `nonce` to validate the transaction for smartAccount
 
-```shell
-$ forge test
+```json
+{
+  "ExecuteStrategy": [
+    { "type": "Operation", "name": "operation" },
+    { "type": "address", "name": "strategy" },
+    { "type": "uint256", "name": "value" },
+    { "type": "bytes", "name": "strategyData" },
+    { "type": "uint256", "name": "nonce" }
+  ]
+}
 ```
 
-### Format
+- ExecuteTriggeredStrategy
+  - `operation` is the type of call
+  - `strategy` is the strategy contract for execution
+  - `value` is the value to send with execution
+  - `strategyData` is the arbitrary data to execute
+  - `trigger` is the trigger address to check before execution
+  - `triggerData` is the arbitrary data to check before execution
+  - `nonce` to validate the transaction for smartAccount
 
-```shell
-$ forge fmt
+```json
+{
+  "ExecuteTriggeredStrategy": [
+    { "type": "Operation", "name": "operation" },
+    { "type": "address", "name": "strategy" },
+    { "type": "uint256", "name": "value" },
+    { "type": "bytes", "name": "strategyData" },
+    { "type": "address", "name": "trigger" },
+    { "type": "bytes", "name": "triggerData" },
+    { "type": "uint256", "name": "nonce" }
+  ]
+}
 ```
 
-### Gas Snapshots
+## Approval Mechanism
 
-```shell
-$ forge snapshot
+However, the module strategy is permissionless, enabling anyone to add their strategy contract and adding them to their wallet, Unhosted incorporates its approval mechanism. This ensures that only modules with verified security measures are provided to our users. Moving forward, we plan to adopt [ERC7484](https://eips.ethereum.org/EIPS/eip-7484) (Registries and Adapters for Smart Accounts) to validate the security of our on-chain strategies. This precaution is in place to prevent the addition of malicious code to users' wallets.
+
+### Considerations
+
+After enabling the Strategy Module, it has ability to invoke both `call` and `delegatecall` to execute any external arbitrary data signed by the owner of the smart account.
+
+## Running tests
+
+```bash
+yarn
+yarn test
 ```
 
-### Anvil
+## Compiling contracts
 
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+```bash
+yarn
+yarn build
 ```
