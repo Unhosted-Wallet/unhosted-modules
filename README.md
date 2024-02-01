@@ -6,7 +6,7 @@ This repository contains a collection of modules that can be used with the [Bico
 
 ## Modules
 
-- [Defi Strategy Module](./defi-strategies)
+- [Strategy Module](./strategy-module)
 - [Recurring Execution Module](./recurring-execution)
 
 ## Security
