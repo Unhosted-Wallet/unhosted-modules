@@ -5,7 +5,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {IStrategyModule, ISignatureValidatorConstants, ISignatureValidator, IExecFromModule, Enum} from "src/interfaces/IStrategyModule.sol";
+import {IStrategyModule, ISignatureValidatorConstants, ISignatureValidator, IExecFromModule, Enum} from "./interface/IStrategyModule.sol";
 
 /**
  * @title Strategy module for Biconomy Smart Accounts.

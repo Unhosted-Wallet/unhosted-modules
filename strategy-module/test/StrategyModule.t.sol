@@ -20,7 +20,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {UserOperation, IAccount} from "I4337/interfaces/IAccount.sol";
 import {IUniswapV3Factory} from "test/interfaces/IUniswapV3Factory.sol";
 import {StrategyModule, Enum, ReentrancyGuard} from "src/StrategyModule.sol";
-import {IStrategyModule} from "src/interfaces/IStrategyModule.sol";
+import {IStrategyModule} from "src/interface/IStrategyModule.sol";
 import {ISwapRouter} from "test/interfaces/ISwapRouter.sol";
 
 import "src/mocks/MockERC20.sol";
