@@ -59,9 +59,8 @@ interface IStrategyModule {
     error InvalidSignature();
 
     /**
-     * @dev Calls any arbitrary logic from strategy without any confirmation if the
-     * module is enabled and SA owner signed the data
-     * @dev Transfer a percentage of the fee based gas usage to beneficiary of the strategy
+     * @dev Call and DelegateCall arbitrary logic from smart account with owner authorization
+     * @dev Transfer a percentage of the fee based gas usage to strategy dev and unhosted
      * @param smartAccount, address of the smart account to execute strategy
      * @param _tx, StrategyTransaction structure including amount of value to call and the arbitrary data to call on strategy
      * @param signatures, signature that should be signed by SA owner following EIP1271
@@ -77,11 +76,25 @@ interface IStrategyModule {
         external
         returns (bool executed, uint256 gasUsed, bytes memory returnData);
 
+    /**
+     * @dev Call and DelegateCall arbitrary logic from smart account with owner authorization and Trigger condition
+     * specified by the owner
+     * @dev Transfer a percentage of the fee based gas usage to strategy dev and unhosted
+     * @param smartAccount, address of the smart account to execute strategy
+     * @param _tx, StrategyTransaction structure including amount of value to call and the arbitrary data to call
+     * with Trigger address and calldata as condition for execution
+     * @param signatures, signature that should be signed by SA owner following EIP1271
+     * @return executed whether the execution was successful or failed
+     * @return gasUsed for execution
+     * @return returnData the data returned from strategy called function
+     */
     function executeTriggeredStrategy(
         address smartAccount,
         TriggeredStrategyTransaction memory _tx,
         bytes memory signatures
-    ) external returns (bool executed, uint256 fee, bytes memory returnData);
+    )
+        external
+        returns (bool executed, uint256 gasUsed, bytes memory returnData);
 
     /**
      * @dev Allows to estimate a transaction.
@@ -100,10 +113,15 @@ interface IStrategyModule {
      */
     function claim() external;
 
+    /**
+     * @dev Allows strategy dev to add or remove their straegy from the module
+     * @param strategy, address of the strategy
+     * @param dev, address of the dev or beneficiary of fees
+     */
     function updateStrategy(address strategy, address dev) external;
 
     /**
-     * @dev Returns hash to be signed by owner.
+     * @dev Returns tx hash to be signed by owner.
      * @param _nonce Transaction nonce.
      * @return Transaction hash.
      */
@@ -112,6 +130,11 @@ interface IStrategyModule {
         uint256 _nonce
     ) external view returns (bytes32);
 
+    /**
+     * @dev Returns tx hash with trigger to be signed by owner.
+     * @param _nonce Transaction nonce.
+     * @return Transaction hash.
+     */
     function getTriggeredStrategyTxHash(
         TriggeredStrategyTransaction calldata _tx,
         uint256 _nonce
@@ -128,6 +151,12 @@ interface IStrategyModule {
         uint256 _nonce
     ) external view returns (bytes memory);
 
+    /**
+     * @dev Returns the bytes that are hashed to be signed by owner.
+     * @param _tx The trigger strategy transaction data to be signed.
+     * @param _nonce Transaction nonce.
+     * @return strategyHash bytes that are hashed to be signed by the owner.
+     */
     function encodeTriggeredStrategyData(
         TriggeredStrategyTransaction memory _tx,
         uint256 _nonce

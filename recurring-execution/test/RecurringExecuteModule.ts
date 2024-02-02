@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { Contract } from "ethers";
 import { AddressZero } from "@ethersproject/constants";
 import { ethers, deployments, waffle } from "hardhat";
-import { WRAPPED_NATIVE_TOKEN } from "../../defi-strategies/test/utils/constants_eth";
+import { WRAPPED_NATIVE_TOKEN } from "./utils/constants_eth";
 import {
   getEcdsaOwnershipRegistryModule,
   getEntryPoint,
