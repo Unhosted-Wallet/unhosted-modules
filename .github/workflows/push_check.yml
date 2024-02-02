@@ -17,16 +17,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Create a fake .secret file
         run: echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
-        working-directory: ./defi-strategies
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile && yarn build
-        working-directory: ./defi-strategies
-      - name: Lint sources
-        run:
-          yarn run lint 
-        working-directory: ./defi-strategies
-      - name: Create a fake .secret file
-        run: echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
         working-directory: ./recurring-execution
       - name: Install dependencies
         run: yarn install --frozen-lockfile && yarn build
@@ -51,16 +41,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
-
-      - name: Create a fake .secret file
-        run: echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
-        working-directory: ./defi-strategies
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile && yarn build
-        working-directory: ./defi-strategies
-      - name: Run tests
-        run: yarn test
-        working-directory: ./defi-strategies
       - name: Create a fake .secret file
         run: echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
         working-directory: ./recurring-execution
