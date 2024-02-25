@@ -1,11 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
+import "./interface/IERC7579Account.sol";
+import "./interface/IExecutor.sol";
+import "./lib/ModeLib.sol";
+import "./lib/ExecutionLib.sol";
+
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {IStrategyModule, ISignatureValidatorConstants, ISignatureValidator, IExecFromModule, Enum} from "./interface/IStrategyModule.sol";
+import {
+    IStrategyModule,
+    ISignatureValidatorConstants,
+    ISignatureValidator,
+    IExecFromModule,
+    Enum
+} from "./interface/IStrategyModule.sol";
 
 /**
  * @title Strategy module for Biconomy Smart Accounts.
@@ -14,15 +25,29 @@ import {IStrategyModule, ISignatureValidatorConstants, ISignatureValidator, IExe
  * - EIP-1271 compatible (checks if the signer is the owner).
  * @author M. Zakeri Rad - <@zakrad>
  */
+contract StrategyModule is ERC165, EIP712, Ownable, ReentrancyGuard, IExecutor, IStrategyModule {
+    using ExecutionLib for bytes;
 
-contract StrategyModule is
-    ERC165,
-    EIP712,
-    Ownable,
-    ReentrancyGuard,
-    ISignatureValidatorConstants,
-    IStrategyModule
-{
+    mapping(address => bool) internal _initialized;
+
+    function onInstall(bytes calldata data) external override {
+        if (isInitialized(msg.sender)) revert AlreadyInitialized(msg.sender);
+        _initialized[msg.sender] = true;
+    }
+
+    function onUninstall(bytes calldata data) external override {
+        if (!isInitialized(msg.sender)) revert NotInitialized(msg.sender);
+        _initialized[msg.sender] = false;
+    }
+
+    function isInitialized(address smartAccount) public view override returns (bool) {
+        return _initialized[smartAccount];
+    }
+
+    function isModuleType(uint256 typeID) external view override returns (bool) {
+        return typeID == 2;
+    }
+
     //ExecuteStrategy
     // solhint-disable-next-line
     // keccak256("ExecuteStrategy(Operation operation,address strategy,uint256 value,bytes strategyData,uint256 nonce)");
@@ -52,21 +77,14 @@ contract StrategyModule is
     error RevertEstimation(uint256);
     error NotTriggered(bytes);
 
-    constructor(
-        string memory name,
-        string memory version
-    ) EIP712(name, version) Ownable(msg.sender) {}
+    constructor(string memory name, string memory version) EIP712(name, version) Ownable(msg.sender) {}
 
     receive() external payable {}
 
     /**
      * @dev See {IStrategyModule-executeStrategy}.
      */
-    function executeStrategy(
-        address smartAccount,
-        StrategyTransaction memory _tx,
-        bytes memory signatures
-    )
+    function executeStrategy(address smartAccount, StrategyTransaction memory _tx, bytes memory signatures)
         public
         virtual
         nonReentrant
@@ -78,31 +96,19 @@ contract StrategyModule is
         }
         bytes32 txHash;
         {
-            bytes memory txHashData = encodeStrategyData(
-                _tx,
-                nonces[smartAccount]++
-            );
+            bytes memory txHashData = encodeStrategyData(_tx, nonces[smartAccount]++);
 
             txHash = keccak256(txHashData);
-            if (
-                ISignatureValidator(smartAccount).isValidSignature(
-                    txHash,
-                    signatures
-                ) != EIP1271_MAGIC_VALUE
-            ) {
+            if (ISignatureValidator(smartAccount).isValidSignature(txHash, signatures) != EIP1271_MAGIC_VALUE) {
                 revert InvalidSignature();
             }
         }
 
         {
             uint256 startGas = gasleft();
-            (executed, returnData) = IExecFromModule(smartAccount)
-                .execTransactionFromModuleReturnData(
-                    _tx.strategy,
-                    _tx.value,
-                    _tx.strategyData,
-                    _tx.operation
-                );
+            (executed, returnData) = IExecFromModule(smartAccount).executeFromExecutor(
+                _tx.strategy, _tx.value, _tx.strategyData, _tx.operation
+            );
             gasUsed = startGas - gasleft();
 
             uint256 devAmount = (gasUsed * tx.gasprice * devFee) / 1e4;
@@ -111,13 +117,9 @@ contract StrategyModule is
             fees[dev] += devAmount;
             fees[owner()] += ownerAmount;
 
-            bool success = IExecFromModule(smartAccount)
-                .execTransactionFromModule(
-                    address(this),
-                    devAmount + ownerAmount,
-                    "",
-                    Enum.Operation.Call
-                );
+            bool success = IExecFromModule(smartAccount).execTransactionFromModule(
+                address(this), devAmount + ownerAmount, "", Enum.Operation.Call
+            );
             if (!success) {
                 revert TransferFailed(devAmount + ownerAmount);
             }
@@ -131,39 +133,22 @@ contract StrategyModule is
         address smartAccount,
         TriggeredStrategyTransaction memory _tx,
         bytes memory signatures
-    )
-        public
-        virtual
-        nonReentrant
-        returns (bool executed, uint256 gasUsed, bytes memory returnData)
-    {
+    ) public virtual nonReentrant returns (bool executed, uint256 gasUsed, bytes memory returnData) {
         address dev = devs[_tx.strategy];
         if (dev == address(0)) {
             revert InvalidStrategy();
         }
         bytes32 txHash;
         {
-            bytes memory txHashData = encodeTriggeredStrategyData(
-                _tx,
-                nonces[smartAccount]++
-            );
+            bytes memory txHashData = encodeTriggeredStrategyData(_tx, nonces[smartAccount]++);
 
             txHash = keccak256(txHashData);
-            if (
-                ISignatureValidator(smartAccount).isValidSignature(
-                    txHash,
-                    signatures
-                ) != EIP1271_MAGIC_VALUE
-            ) {
+            if (ISignatureValidator(smartAccount).isValidSignature(txHash, signatures) != EIP1271_MAGIC_VALUE) {
                 revert InvalidSignature();
             }
-            (bool success, bytes memory data) = IExecFromModule(smartAccount)
-                .execTransactionFromModuleReturnData(
-                    _tx.trigger,
-                    0,
-                    _tx.triggerData,
-                    Enum.Operation.Call
-                );
+            (bool success, bytes memory data) = IExecFromModule(smartAccount).execTransactionFromModuleReturnData(
+                _tx.trigger, 0, _tx.triggerData, Enum.Operation.Call
+            );
             if (!success) {
                 revert NotTriggered(data);
             }
@@ -171,13 +156,9 @@ contract StrategyModule is
 
         {
             uint256 startGas = gasleft();
-            (executed, returnData) = IExecFromModule(smartAccount)
-                .execTransactionFromModuleReturnData(
-                    _tx.strategy,
-                    _tx.value,
-                    _tx.strategyData,
-                    _tx.operation
-                );
+            (executed, returnData) = IExecFromModule(smartAccount).execTransactionFromModuleReturnData(
+                _tx.strategy, _tx.value, _tx.strategyData, _tx.operation
+            );
             gasUsed = startGas - gasleft();
 
             uint256 devAmount = (gasUsed * tx.gasprice * devFee) / 1e4;
@@ -186,13 +167,9 @@ contract StrategyModule is
             fees[dev] += devAmount;
             fees[owner()] += ownerAmount;
 
-            bool success = IExecFromModule(smartAccount)
-                .execTransactionFromModule(
-                    address(this),
-                    devAmount + ownerAmount,
-                    "",
-                    Enum.Operation.Call
-                );
+            bool success = IExecFromModule(smartAccount).execTransactionFromModule(
+                address(this), devAmount + ownerAmount, "", Enum.Operation.Call
+            );
             if (!success) {
                 revert TransferFailed(devAmount + ownerAmount);
             }
@@ -202,17 +179,11 @@ contract StrategyModule is
     /**
      * @dev See {IStrategyModule-requiredTxGas}.
      */
-    function requiredTxGas(
-        address smartAccount,
-        StrategyTransaction memory _tx
-    ) public {
+    function requiredTxGas(address smartAccount, StrategyTransaction memory _tx) public {
         uint256 startGas = gasleft();
 
         IExecFromModule(smartAccount).execTransactionFromModuleReturnData(
-            _tx.strategy,
-            _tx.value,
-            _tx.strategyData,
-            _tx.operation
+            _tx.strategy, _tx.value, _tx.strategyData, _tx.operation
         );
         uint256 gasUsed = (startGas - gasleft());
 
@@ -255,56 +226,41 @@ contract StrategyModule is
     /**
      * @dev See {IStrategyModule-getTransactionHash}.
      */
-    function getStrategyTxHash(
-        StrategyTransaction calldata _tx,
-        uint256 _nonce
-    ) public view returns (bytes32) {
+    function getStrategyTxHash(StrategyTransaction calldata _tx, uint256 _nonce) public view returns (bytes32) {
         return keccak256(encodeStrategyData(_tx, _nonce));
     }
 
     /**
      * @dev See {IStrategyModule-getTriggeredStrategyTxHash}.
      */
-    function getTriggeredStrategyTxHash(
-        TriggeredStrategyTransaction calldata _tx,
-        uint256 _nonce
-    ) public view returns (bytes32) {
+    function getTriggeredStrategyTxHash(TriggeredStrategyTransaction calldata _tx, uint256 _nonce)
+        public
+        view
+        returns (bytes32)
+    {
         return keccak256(encodeTriggeredStrategyData(_tx, _nonce));
     }
 
     /**
      * @dev See {IStrategyModule-encodeStrategyData}.
      */
-    function encodeStrategyData(
-        StrategyTransaction memory _tx,
-        uint256 _nonce
-    ) public view returns (bytes memory) {
+    function encodeStrategyData(StrategyTransaction memory _tx, uint256 _nonce) public view returns (bytes memory) {
         bytes32 strategyHash = keccak256(
             abi.encode(
-                EXECUTE_STRATEGY_TYPEHASH,
-                _tx.operation,
-                _tx.strategy,
-                _tx.value,
-                keccak256(_tx.strategyData),
-                _nonce
+                EXECUTE_STRATEGY_TYPEHASH, _tx.operation, _tx.strategy, _tx.value, keccak256(_tx.strategyData), _nonce
             )
         );
-        return
-            bytes.concat(
-                bytes1(0x19),
-                bytes1(0x01),
-                _domainSeparatorV4(),
-                strategyHash
-            );
+        return bytes.concat(bytes1(0x19), bytes1(0x01), _domainSeparatorV4(), strategyHash);
     }
 
     /**
      * @dev See {IStrategyModule-encodeTriggeredStrategyData}.
      */
-    function encodeTriggeredStrategyData(
-        TriggeredStrategyTransaction memory _tx,
-        uint256 _nonce
-    ) public view returns (bytes memory) {
+    function encodeTriggeredStrategyData(TriggeredStrategyTransaction memory _tx, uint256 _nonce)
+        public
+        view
+        returns (bytes memory)
+    {
         bytes32 triggeredStrategyHash = keccak256(
             abi.encode(
                 EXECUTE_TRIGGERED_STRATEGY_TYPEHASH,
@@ -317,21 +273,13 @@ contract StrategyModule is
                 _nonce
             )
         );
-        return
-            bytes.concat(
-                bytes1(0x19),
-                bytes1(0x01),
-                _domainSeparatorV4(),
-                triggeredStrategyHash
-            );
+        return bytes.concat(bytes1(0x19), bytes1(0x01), _domainSeparatorV4(), triggeredStrategyHash);
     }
 
     /**
      * @dev See {IStrategyModule-getNonce}.
      */
-    function getNonce(
-        address smartAccount
-    ) public view virtual returns (uint256) {
+    function getNonce(address smartAccount) public view virtual returns (uint256) {
         return nonces[smartAccount];
     }
 
@@ -345,11 +293,7 @@ contract StrategyModule is
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ERC165) returns (bool) {
-        return
-            interfaceId == type(IStrategyModule).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
+        return interfaceId == type(IStrategyModule).interfaceId || super.supportsInterface(interfaceId);
     }
 }

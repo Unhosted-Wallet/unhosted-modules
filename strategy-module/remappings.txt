@@ -1,2 +1,3 @@
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 solady/=lib/solady/src/
+erc7579/=node_modules/erc7579/src/

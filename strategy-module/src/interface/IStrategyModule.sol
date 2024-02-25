@@ -6,59 +6,10 @@ contract ISignatureValidatorConstants {
     bytes4 internal constant EIP1271_MAGIC_VALUE = 0x1626ba7e;
 }
 
-abstract contract ISignatureValidator is ISignatureValidatorConstants {
-    /**
-     * @dev Should return whether the signature provided is valid for the provided data
-     * @param _dataHash Arbitrary length data signed on behalf of address(this)
-     * @param _signature Signature byte array associated with _data
-     *
-     * MUST return the bytes4 magic value 0x1626ba7e when function passes.
-     * MUST NOT modify state (using STATICCALL for solc < 0.5, view modifier for solc > 0.5)
-     * MUST allow external calls
-     */
-    function isValidSignature(
-        bytes32 _dataHash,
-        bytes memory _signature
-    ) public view virtual returns (bytes4);
-}
-
-abstract contract Enum {
-    enum Operation {
-        Call,
-        DelegateCall
-    }
-}
-
-interface IExecFromModule {
-    function execTransactionFromModule(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation,
-        uint256 txGas
-    ) external returns (bool success);
-
-    function execTransactionFromModule(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation
-    ) external returns (bool success);
-
-    function execTransactionFromModuleReturnData(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation
-    ) external returns (bool success, bytes memory returnData);
-}
-
 interface IStrategyModule {
     struct StrategyTransaction {
-        Enum.Operation operation;
         address strategy;
-        uint256 value;
-        bytes strategyData;
+
     }
 
     struct TriggeredStrategyTransaction {
