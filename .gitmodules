@@ -1,0 +1,12 @@
+[submodule "strategy-module/lib/erc7579-implementation"]
+	path = strategy-module/lib/erc7579-implementation
+	url = https://github.com/erc7579/erc7579-implementation
+[submodule "strategy-module/lib/modulekit"]
+	path = strategy-module/lib/modulekit
+	url = https://github.com/rhinestonewtf/modulekit
+[submodule "strategy-module/lib/I4337"]
+	path = strategy-module/lib/I4337
+	url = https://github.com/leekt/I4337
+[submodule "strategy-module/lib/forge-std"]
+	path = strategy-module/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std

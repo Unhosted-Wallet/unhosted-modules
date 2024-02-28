@@ -1,32 +1,39 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import "./interface/IERC7579Account.sol";
-import "./interface/IExecutor.sol";
-import "./lib/ModeLib.sol";
-import "./lib/ExecutionLib.sol";
+import {ERC7579ExecutorBase, SessionKeyBase} from "erc7579/modules/Modules.sol";
+import {IERC7579Account} from "erc7579/interfaces/IERC7579Account.sol";
+import {ModeLib} from "erc7579/lib/ModeLib.sol";
+import {ExecutionLib} from "erc7579/lib/ExecutionLib.sol";
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {
-    IStrategyModule,
-    ISignatureValidatorConstants,
-    ISignatureValidator,
-    IExecFromModule,
-    Enum
-} from "./interface/IStrategyModule.sol";
+import {IStrategyModule} from "./interface/IStrategyModule.sol";
 
 /**
- * @title Strategy module for Biconomy Smart Accounts.
- * @dev Compatible with Biconomy Modular Interface v 0.1
- * - It allows to call and delegate call to external strategy and trigger contracts and execute or check arbitrary data.
- * - EIP-1271 compatible (checks if the signer is the owner).
- * @author M. Zakeri Rad - <@zakrad>
+ * @title Strategy module for ERC7579 SAs.
+ * @dev Compatible with ERC7579 session manager
+ * @dev It allows to call, batchcall and delegate call to external strategy and trigger contracts
+ * and execute or check arbitrary data.
+ * @author zakrad.eth - <@zakrad>
  */
-contract StrategyModule is ERC165, EIP712, Ownable, ReentrancyGuard, IExecutor, IStrategyModule {
+contract StrategyModule is
+    ERC165,
+    EIP712,
+    Ownable,
+    ReentrancyGuard,
+    ERC7579ExecutorBase,
+    SessionKeyBase,
+    IStrategyModule
+{
     using ExecutionLib for bytes;
+
+    struct ExecutorAccess {
+        address sessionKeySigner;
+        address strategy;
+    }
 
     mapping(address => bool) internal _initialized;
 
@@ -40,35 +47,17 @@ contract StrategyModule is ERC165, EIP712, Ownable, ReentrancyGuard, IExecutor, 
         _initialized[msg.sender] = false;
     }
 
-    function isInitialized(address smartAccount) public view override returns (bool) {
-        return _initialized[smartAccount];
-    }
-
     function isModuleType(uint256 typeID) external view override returns (bool) {
-        return typeID == 2;
+        return typeID == TYPE_EXECUTOR;
     }
-
-    //ExecuteStrategy
-    // solhint-disable-next-line
-    // keccak256("ExecuteStrategy(Operation operation,address strategy,uint256 value,bytes strategyData,uint256 nonce)");
-    bytes32 internal constant EXECUTE_STRATEGY_TYPEHASH =
-        0xa53118058e6e66d81ae80c0599df5769dde6ebd7ddad81f2d13ef7538d216a4f;
-
-    //ExecuteTriggeredStrategy
-    // solhint-disable-next-line
-    // keccak256("ExecuteTriggeredStrategy(Operation operation,address strategy,uint256 value,bytes strategyData,address trigger,bytes triggerData,uint256 nonce)");
-    bytes32 internal constant EXECUTE_TRIGGERED_STRATEGY_TYPEHASH =
-        0x77870b0974f7c7fecf66fbaec7655d68d88633048a314ff9fc5de4c84e98d96b;
 
     // solhint-disable-next-line
     uint256 public devFee = 1000; // 10%
-    uint256 public unhostedFee = 1000; // 10%
+    uint256 public platformFee = 1000; // 10%
 
-    mapping(address => uint256) public nonces;
+    mapping(address => address) public strategyDevs; // strategy to dev mapping
 
-    mapping(address => address) public devs; // strategy to dev mapping
-
-    mapping(address => uint256) public fees; // dev to fees mapping
+    mapping(address => uint256) public accumulatedFees; // dev to fee mapping
 
     error InvalidStrategy();
     error AddressCanNotBeZero();
@@ -84,45 +73,100 @@ contract StrategyModule is ERC165, EIP712, Ownable, ReentrancyGuard, IExecutor, 
     /**
      * @dev See {IStrategyModule-executeStrategy}.
      */
-    function executeStrategy(address smartAccount, StrategyTransaction memory _tx, bytes memory signatures)
+    function executeStrategy(address strategy, uint256 value, bytes calldata strategyData)
         public
         virtual
         nonReentrant
-        returns (bool executed, uint256 gasUsed, bytes memory returnData)
+        returns (uint256 gasUsed, bytes[] memory returnData)
     {
-        address dev = devs[_tx.strategy];
+        address dev = devs[strategy];
         if (dev == address(0)) {
             revert InvalidStrategy();
-        }
-        bytes32 txHash;
-        {
-            bytes memory txHashData = encodeStrategyData(_tx, nonces[smartAccount]++);
-
-            txHash = keccak256(txHashData);
-            if (ISignatureValidator(smartAccount).isValidSignature(txHash, signatures) != EIP1271_MAGIC_VALUE) {
-                revert InvalidSignature();
-            }
         }
 
         {
             uint256 startGas = gasleft();
-            (executed, returnData) = IExecFromModule(smartAccount).executeFromExecutor(
-                _tx.strategy, _tx.value, _tx.strategyData, _tx.operation
+            returnData = IERC7579Account(msg.sender).executeFromExecutor(
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(strategy, value, strategyData)
             );
             gasUsed = startGas - gasleft();
 
             uint256 devAmount = (gasUsed * tx.gasprice * devFee) / 1e4;
-            uint256 ownerAmount = (gasUsed * tx.gasprice * unhostedFee) / 1e4;
+            uint256 platformAmount = (gasUsed * tx.gasprice * platformFee) / 1e4;
 
             fees[dev] += devAmount;
-            fees[owner()] += ownerAmount;
+            fees[owner()] += platformAmount;
 
-            bool success = IExecFromModule(smartAccount).execTransactionFromModule(
-                address(this), devAmount + ownerAmount, "", Enum.Operation.Call
+            IERC7579Account(msg.sender).executeFromExecutor(
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
             );
-            if (!success) {
-                revert TransferFailed(devAmount + ownerAmount);
-            }
+        }
+    }
+
+    /**
+     * @dev See {IStrategyModule-executeStrategy}.
+     */
+    function executeStrategy(address strategy, bytes calldata strategyData)
+        public
+        virtual
+        nonReentrant
+        returns (uint256 gasUsed, bytes[] memory returnData)
+    {
+        address dev = devs[strategy];
+        if (dev == address(0)) {
+            revert InvalidStrategy();
+        }
+
+        {
+            uint256 startGas = gasleft();
+            returnData = IERC7579Account(msg.sender).executeFromExecutor(
+                ModeLib.encode(CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)),
+                abi.encodePacked(strategy, strategyData)
+            );
+            gasUsed = startGas - gasleft();
+
+            uint256 devAmount = (gasUsed * tx.gasprice * devFee) / 1e4;
+            uint256 platformAmount = (gasUsed * tx.gasprice * platformFee) / 1e4;
+
+            fees[dev] += devAmount;
+            fees[owner()] += platformAmount;
+
+            IERC7579Account(msg.sender).executeFromExecutor(
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
+            );
+        }
+    }
+
+    /**
+     * @dev See {IStrategyModule-executeStrategy}.
+     */
+    function executeStrategy(Execution[] calldata executions)
+        public
+        virtual
+        nonReentrant
+        returns (uint256 gasUsed, bytes[] memory returnData)
+    {
+        address dev = devs[executions[0].target];
+        if (dev == address(0)) {
+            revert InvalidStrategy();
+        }
+
+        {
+            uint256 startGas = gasleft();
+            returnData = IERC7579Account(msg.sender).executeFromExecutor(
+                ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(executions)
+            );
+            gasUsed = startGas - gasleft();
+
+            uint256 devAmount = (gasUsed * tx.gasprice * devFee) / 1e4;
+            uint256 platformAmount = (gasUsed * tx.gasprice * platformFee) / 1e4;
+
+            fees[dev] += devAmount;
+            fees[owner()] += platformAmount;
+
+            IERC7579Account(msg.sender).executeFromExecutor(
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
+            );
         }
     }
 
@@ -130,60 +174,152 @@ contract StrategyModule is ERC165, EIP712, Ownable, ReentrancyGuard, IExecutor, 
      * @dev See {IStrategyModule-executeTriggeredStrategy}.
      */
     function executeTriggeredStrategy(
-        address smartAccount,
-        TriggeredStrategyTransaction memory _tx,
-        bytes memory signatures
-    ) public virtual nonReentrant returns (bool executed, uint256 gasUsed, bytes memory returnData) {
-        address dev = devs[_tx.strategy];
+        address strategy,
+        uint256 value,
+        bytes calldata strategyData,
+        address trigger,
+        bytes calldata triggerData
+    ) public virtual nonReentrant returns (uint256 gasUsed, bytes[] memory returnData) {
+        address dev = devs[strategy];
         if (dev == address(0)) {
             revert InvalidStrategy();
         }
-        bytes32 txHash;
-        {
-            bytes memory txHashData = encodeTriggeredStrategyData(_tx, nonces[smartAccount]++);
 
-            txHash = keccak256(txHashData);
-            if (ISignatureValidator(smartAccount).isValidSignature(txHash, signatures) != EIP1271_MAGIC_VALUE) {
-                revert InvalidSignature();
-            }
-            (bool success, bytes memory data) = IExecFromModule(smartAccount).execTransactionFromModuleReturnData(
-                _tx.trigger, 0, _tx.triggerData, Enum.Operation.Call
-            );
-            if (!success) {
-                revert NotTriggered(data);
-            }
-        }
+        IERC7579Account(msg.sender).executeFromExecutor(
+            ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(trigger, 0, triggerData)
+        );
 
         {
             uint256 startGas = gasleft();
-            (executed, returnData) = IExecFromModule(smartAccount).execTransactionFromModuleReturnData(
-                _tx.strategy, _tx.value, _tx.strategyData, _tx.operation
+            returnData = IERC7579Account(msg.sender).executeFromExecutor(
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(strategy, value, strategyData)
             );
             gasUsed = startGas - gasleft();
 
             uint256 devAmount = (gasUsed * tx.gasprice * devFee) / 1e4;
-            uint256 ownerAmount = (gasUsed * tx.gasprice * unhostedFee) / 1e4;
+            uint256 platformAmount = (gasUsed * tx.gasprice * platformFee) / 1e4;
 
             fees[dev] += devAmount;
-            fees[owner()] += ownerAmount;
+            fees[owner()] += platformAmount;
 
-            bool success = IExecFromModule(smartAccount).execTransactionFromModule(
-                address(this), devAmount + ownerAmount, "", Enum.Operation.Call
+            IERC7579Account(msg.sender).executeFromExecutor(
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
             );
-            if (!success) {
-                revert TransferFailed(devAmount + ownerAmount);
-            }
+        }
+    }
+
+    /**
+     * @dev See {IStrategyModule-executeTriggeredStrategy}.
+     */
+    function executeTriggeredStrategy(
+        address strategy,
+        bytes calldata strategyData,
+        address trigger,
+        bytes calldata triggerData
+    ) public virtual nonReentrant returns (uint256 gasUsed, bytes[] memory returnData) {
+        address dev = devs[strategy];
+        if (dev == address(0)) {
+            revert InvalidStrategy();
+        }
+
+        IERC7579Account(msg.sender).executeFromExecutor(
+            ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(trigger, 0, triggerData)
+        );
+
+        {
+            uint256 startGas = gasleft();
+            returnData = IERC7579Account(msg.sender).executeFromExecutor(
+                ModeLib.encode(CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)),
+                abi.encodePacked(strategy, strategyData)
+            );
+            gasUsed = startGas - gasleft();
+
+            uint256 devAmount = (gasUsed * tx.gasprice * devFee) / 1e4;
+            uint256 platformAmount = (gasUsed * tx.gasprice * platformFee) / 1e4;
+
+            fees[dev] += devAmount;
+            fees[owner()] += platformAmount;
+
+            IERC7579Account(msg.sender).executeFromExecutor(
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
+            );
+        }
+    }
+
+    /**
+     * @dev See {IStrategyModule-executeTriggeredStrategy}.
+     */
+    function executeTriggeredStrategy(Execution[] calldata executions, address trigger, bytes calldata triggerData)
+        public
+        virtual
+        nonReentrant
+        returns (uint256 gasUsed, bytes[] memory returnData)
+    {
+        address dev = devs[executions[0].target];
+        if (dev == address(0)) {
+            revert InvalidStrategy();
+        }
+
+        IERC7579Account(msg.sender).executeFromExecutor(
+            ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(trigger, 0, triggerData)
+        );
+
+        {
+            uint256 startGas = gasleft();
+            returnData = IERC7579Account(msg.sender).executeFromExecutor(
+                ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(executions)
+            );
+            gasUsed = startGas - gasleft();
+
+            uint256 devAmount = (gasUsed * tx.gasprice * devFee) / 1e4;
+            uint256 platformAmount = (gasUsed * tx.gasprice * platformFee) / 1e4;
+
+            fees[dev] += devAmount;
+            fees[owner()] += platformAmount;
+
+            IERC7579Account(msg.sender).executeFromExecutor(
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
+            );
         }
     }
 
     /**
      * @dev See {IStrategyModule-requiredTxGas}.
      */
-    function requiredTxGas(address smartAccount, StrategyTransaction memory _tx) public {
+    function requiredTxGas(address smartAccount, address strategy, uint256 value, bytes calldata strategyData) public {
         uint256 startGas = gasleft();
 
-        IExecFromModule(smartAccount).execTransactionFromModuleReturnData(
-            _tx.strategy, _tx.value, _tx.strategyData, _tx.operation
+        IERC7579Account(smartAccount).executeFromExecutor(
+            ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(strategy, value, strategyData)
+        );
+        uint256 gasUsed = (startGas - gasleft());
+
+        revert RevertEstimation(gasUsed);
+    }
+
+    /**
+     * @dev See {IStrategyModule-requiredTxGas}.
+     */
+    function requiredTxGas(address smartAccount, address strategy, bytes calldata strategyData) public {
+        uint256 startGas = gasleft();
+
+        IERC7579Account(smartAccount).executeFromExecutor(
+            ModeLib.encode(CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)),
+            abi.encodePacked(strategy, strategyData)
+        );
+        uint256 gasUsed = (startGas - gasleft());
+
+        revert RevertEstimation(gasUsed);
+    }
+
+    /**
+     * @dev See {IStrategyModule-requiredTxGas}.
+     */
+    function requiredTxGas(address smartAccount, Execution[] calldata executions) public {
+        uint256 startGas = gasleft();
+
+        IERC7579Account(smartAccount).executeFromExecutor(
+            ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(executions)
         );
         uint256 gasUsed = (startGas - gasleft());
 
@@ -217,77 +353,41 @@ contract StrategyModule is ERC165, EIP712, Ownable, ReentrancyGuard, IExecutor, 
     }
 
     /**
-     * @dev See {IStrategyModule-updateUnhostedFee}.
+     * @dev See {IStrategyModule-updatePlatformFee}.
      */
-    function updateUnhostedFee(uint256 unhostedFee_) public onlyOwner {
-        unhostedFee = unhostedFee_;
+    function updatePlatformFee(uint256 platformFee_) public onlyOwner {
+        platformFee = platformFee_;
     }
 
-    /**
-     * @dev See {IStrategyModule-getTransactionHash}.
-     */
-    function getStrategyTxHash(StrategyTransaction calldata _tx, uint256 _nonce) public view returns (bytes32) {
-        return keccak256(encodeStrategyData(_tx, _nonce));
-    }
+    function validateSessionParams(
+        address destinationContract,
+        uint256 callValue,
+        bytes calldata callData,
+        bytes calldata _sessionKeyData,
+        bytes calldata /*_callSpecificData*/
+    ) external view virtual override returns (address) {
+        ExecutorAccess memory access = abi.decode(_sessionKeyData, (ExecutorAccess));
 
-    /**
-     * @dev See {IStrategyModule-getTriggeredStrategyTxHash}.
-     */
-    function getTriggeredStrategyTxHash(TriggeredStrategyTransaction calldata _tx, uint256 _nonce)
-        public
-        view
-        returns (bytes32)
-    {
-        return keccak256(encodeTriggeredStrategyData(_tx, _nonce));
-    }
+        bytes4 targetSelector = bytes4(callData[:4]);
 
-    /**
-     * @dev See {IStrategyModule-encodeStrategyData}.
-     */
-    function encodeStrategyData(StrategyTransaction memory _tx, uint256 _nonce) public view returns (bytes memory) {
-        bytes32 strategyHash = keccak256(
-            abi.encode(
-                EXECUTE_STRATEGY_TYPEHASH, _tx.operation, _tx.strategy, _tx.value, keccak256(_tx.strategyData), _nonce
-            )
-        );
-        return bytes.concat(bytes1(0x19), bytes1(0x01), _domainSeparatorV4(), strategyHash);
-    }
+        uint256 jobId = abi.decode(callData[4:], (uint256));
+        if (targetSelector != this.executeOrder.selector) {
+            revert InvalidMethod(targetSelector);
+        }
 
-    /**
-     * @dev See {IStrategyModule-encodeTriggeredStrategyData}.
-     */
-    function encodeTriggeredStrategyData(TriggeredStrategyTransaction memory _tx, uint256 _nonce)
-        public
-        view
-        returns (bytes memory)
-    {
-        bytes32 triggeredStrategyHash = keccak256(
-            abi.encode(
-                EXECUTE_TRIGGERED_STRATEGY_TYPEHASH,
-                _tx.operation,
-                _tx.strategy,
-                _tx.value,
-                keccak256(_tx.strategyData),
-                _tx.trigger,
-                keccak256(_tx.triggerData),
-                _nonce
-            )
-        );
-        return bytes.concat(bytes1(0x19), bytes1(0x01), _domainSeparatorV4(), triggeredStrategyHash);
-    }
+        if (jobId != access.jobId) {
+            revert InvalidJob();
+        }
 
-    /**
-     * @dev See {IStrategyModule-getNonce}.
-     */
-    function getNonce(address smartAccount) public view virtual returns (uint256) {
-        return nonces[smartAccount];
-    }
+        if (destinationContract != address(this)) {
+            revert InvalidRecipient();
+        }
 
-    /**
-     * @dev See {EIP712-domainSeparator}.
-     */
-    function domainSeparator() public view returns (bytes32) {
-        return _domainSeparatorV4();
+        if (callValue != 0) {
+            revert InvalidValue();
+        }
+
+        return access.sessionKeySigner;
     }
 
     /**
