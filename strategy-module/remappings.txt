@@ -1,3 +1,9 @@
 @openzeppelin/=node_modules/@openzeppelin/
 solady/=lib/solady/
-kit/=lib/modulekit/packages/modulekit/src/
+kit/=node_modules/@rhinestone/modulekit/packages/modulekit/src/
+account-abstraction/=node_modules/@ERC4337/account-abstraction/contracts/
+account-abstraction-v0.6/=node_modules/@ERC4337/account-abstraction-v0.6/contracts/
+@ERC4337/=node_modules/@ERC4337/
+erc7579/=node_modules/erc7579/src/
+@rhinestone/sessionkeymanager/=node_modules/@rhinestone/modulekit/packages/SessionKeyManager
+sentinellist/=node_modules/sentinellist/src/

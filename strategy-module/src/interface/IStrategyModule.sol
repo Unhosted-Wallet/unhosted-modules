@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import {Execution} from "kit/external/ERC7579.sol";
+
 interface IStrategyModule {
     function executeStrategy(address strategy, uint256 value, bytes calldata strategyData)
         external
