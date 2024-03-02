@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
-import {ERC7579ExecutorBase, SessionKeyBase} from "kit/Modules.sol";
-import {IERC7579Account} from "kit/Accounts.sol";
-import {ERC7579ModeLib, ERC7579ExecutionLib, Execution} from "kit/external/ERC7579.sol";
+import {IERC7579Account} from "erc7579/interfaces/IERC7579Account.sol";
+import {IExecutor, MODULE_TYPE_EXECUTOR} from "erc7579/interfaces/IERC7579Module.sol";
+import {ExecutionLib, Execution} from "erc7579/lib/ExecutionLib.sol";
+import {ModeLib, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload} from "erc7579/lib/ModeLib.sol";
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IStrategyModule} from "./interface/IStrategyModule.sol";
+import {ISessionValidationModule} from "./interface/ISessionValidationModule.sol";
 
 /**
  * @title Strategy module for ERC7579 SAs.
@@ -18,16 +20,8 @@ import {IStrategyModule} from "./interface/IStrategyModule.sol";
  * and execute or check arbitrary data.
  * @author zakrad.eth - <@zakrad>
  */
-contract StrategyModule is
-    ERC165,
-    EIP712,
-    Ownable,
-    ReentrancyGuard,
-    ERC7579ExecutorBase,
-    SessionKeyBase,
-    IStrategyModule
-{
-    using ERC7579ExecutionLib for bytes;
+contract StrategyModule is ERC165, EIP712, Ownable, ReentrancyGuard, IExecutor, ISessionValidationModule, IStrategyModule {
+    using ExecutionLib for bytes;
 
     struct ExecutorAccess {
         address sessionKeySigner;
@@ -47,7 +41,7 @@ contract StrategyModule is
     }
 
     function isModuleType(uint256 typeID) external view override returns (bool) {
-        return typeID == TYPE_EXECUTOR;
+        return typeID == MODULE_TYPE_EXECUTOR;
     }
 
     // solhint-disable-next-line
@@ -86,7 +80,7 @@ contract StrategyModule is
         {
             uint256 startGas = gasleft();
             returnData = IERC7579Account(msg.sender).executeFromExecutor(
-                ERC7579ModeLib.encodeSimpleSingle(), ERC7579ExecutionLib.encodeSingle(strategy, value, strategyData)
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(strategy, value, strategyData)
             );
             gasUsed = startGas - gasleft();
 
@@ -97,7 +91,7 @@ contract StrategyModule is
             accumulatedFees[owner()] += platformAmount;
 
             IERC7579Account(msg.sender).executeFromExecutor(
-                ERC7579ModeLib.encodeSimpleSingle(), ERC7579ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
             );
         }
     }
@@ -119,7 +113,7 @@ contract StrategyModule is
         {
             uint256 startGas = gasleft();
             returnData = IERC7579Account(msg.sender).executeFromExecutor(
-                ERC7579ModeLib.encode(CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)),
+                ModeLib.encode(CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)),
                 abi.encodePacked(strategy, strategyData)
             );
             gasUsed = startGas - gasleft();
@@ -131,7 +125,7 @@ contract StrategyModule is
             accumulatedFees[owner()] += platformAmount;
 
             IERC7579Account(msg.sender).executeFromExecutor(
-                ERC7579ModeLib.encodeSimpleSingle(), ERC7579ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
             );
         }
     }
@@ -153,7 +147,7 @@ contract StrategyModule is
         {
             uint256 startGas = gasleft();
             returnData = IERC7579Account(msg.sender).executeFromExecutor(
-                ERC7579ModeLib.encodeSimpleBatch(), ERC7579ExecutionLib.encodeBatch(executions)
+                ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(executions)
             );
             gasUsed = startGas - gasleft();
 
@@ -164,7 +158,7 @@ contract StrategyModule is
             accumulatedFees[owner()] += platformAmount;
 
             IERC7579Account(msg.sender).executeFromExecutor(
-                ERC7579ModeLib.encodeSimpleSingle(), ERC7579ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
             );
         }
     }
@@ -185,13 +179,13 @@ contract StrategyModule is
         }
 
         IERC7579Account(msg.sender).executeFromExecutor(
-            ERC7579ModeLib.encodeSimpleSingle(), ERC7579ExecutionLib.encodeSingle(trigger, 0, triggerData)
+            ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(trigger, 0, triggerData)
         );
 
         {
             uint256 startGas = gasleft();
             returnData = IERC7579Account(msg.sender).executeFromExecutor(
-                ERC7579ModeLib.encodeSimpleSingle(), ERC7579ExecutionLib.encodeSingle(strategy, value, strategyData)
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(strategy, value, strategyData)
             );
             gasUsed = startGas - gasleft();
 
@@ -202,7 +196,7 @@ contract StrategyModule is
             accumulatedFees[owner()] += platformAmount;
 
             IERC7579Account(msg.sender).executeFromExecutor(
-                ERC7579ModeLib.encodeSimpleSingle(), ERC7579ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
             );
         }
     }
@@ -222,13 +216,13 @@ contract StrategyModule is
         }
 
         IERC7579Account(msg.sender).executeFromExecutor(
-            ERC7579ModeLib.encodeSimpleSingle(), ERC7579ExecutionLib.encodeSingle(trigger, 0, triggerData)
+            ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(trigger, 0, triggerData)
         );
 
         {
             uint256 startGas = gasleft();
             returnData = IERC7579Account(msg.sender).executeFromExecutor(
-                ERC7579ModeLib.encode(CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)),
+                ModeLib.encode(CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)),
                 abi.encodePacked(strategy, strategyData)
             );
             gasUsed = startGas - gasleft();
@@ -240,7 +234,7 @@ contract StrategyModule is
             accumulatedFees[owner()] += platformAmount;
 
             IERC7579Account(msg.sender).executeFromExecutor(
-                ERC7579ModeLib.encodeSimpleSingle(), ERC7579ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
             );
         }
     }
@@ -260,13 +254,13 @@ contract StrategyModule is
         }
 
         IERC7579Account(msg.sender).executeFromExecutor(
-            ERC7579ModeLib.encodeSimpleSingle(), ERC7579ExecutionLib.encodeSingle(trigger, 0, triggerData)
+            ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(trigger, 0, triggerData)
         );
 
         {
             uint256 startGas = gasleft();
             returnData = IERC7579Account(msg.sender).executeFromExecutor(
-                ERC7579ModeLib.encodeSimpleBatch(), ERC7579ExecutionLib.encodeBatch(executions)
+                ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(executions)
             );
             gasUsed = startGas - gasleft();
 
@@ -277,7 +271,7 @@ contract StrategyModule is
             accumulatedFees[owner()] += platformAmount;
 
             IERC7579Account(msg.sender).executeFromExecutor(
-                ERC7579ModeLib.encodeSimpleSingle(), ERC7579ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
+                ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(this), devAmount + platformAmount, "")
             );
         }
     }
@@ -289,7 +283,7 @@ contract StrategyModule is
         uint256 startGas = gasleft();
 
         IERC7579Account(smartAccount).executeFromExecutor(
-            ERC7579ModeLib.encodeSimpleSingle(), ERC7579ExecutionLib.encodeSingle(strategy, value, strategyData)
+            ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(strategy, value, strategyData)
         );
         uint256 gasUsed = (startGas - gasleft());
 
@@ -303,7 +297,7 @@ contract StrategyModule is
         uint256 startGas = gasleft();
 
         IERC7579Account(smartAccount).executeFromExecutor(
-            ERC7579ModeLib.encode(CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)),
+            ModeLib.encode(CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)),
             abi.encodePacked(strategy, strategyData)
         );
         uint256 gasUsed = (startGas - gasleft());
@@ -318,7 +312,7 @@ contract StrategyModule is
         uint256 startGas = gasleft();
 
         IERC7579Account(smartAccount).executeFromExecutor(
-            ERC7579ModeLib.encodeSimpleBatch(), ERC7579ExecutionLib.encodeBatch(executions)
+            ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(executions)
         );
         uint256 gasUsed = (startGas - gasleft());
 
@@ -365,28 +359,28 @@ contract StrategyModule is
         bytes calldata _sessionKeyData,
         bytes calldata /*_callSpecificData*/
     ) external view virtual override returns (address) {
-        ExecutorAccess memory access = abi.decode(_sessionKeyData, (ExecutorAccess));
+        // ExecutorAccess memory access = abi.decode(_sessionKeyData, (ExecutorAccess));
 
-        bytes4 targetSelector = bytes4(callData[:4]);
+        // bytes4 targetSelector = bytes4(callData[:4]);
 
-        uint256 jobId = abi.decode(callData[4:], (uint256));
-        if (targetSelector != this.executeOrder.selector) {
-            revert InvalidMethod(targetSelector);
-        }
+        // uint256 jobId = abi.decode(callData[4:], (uint256));
+        // if (targetSelector != this.executeOrder.selector) {
+        //     revert InvalidMethod(targetSelector);
+        // }
 
-        if (jobId != access.jobId) {
-            revert InvalidJob();
-        }
+        // if (jobId != access.jobId) {
+        //     revert InvalidJob();
+        // }
 
-        if (destinationContract != address(this)) {
-            revert InvalidRecipient();
-        }
+        // if (destinationContract != address(this)) {
+        //     revert InvalidRecipient();
+        // }
 
-        if (callValue != 0) {
-            revert InvalidValue();
-        }
+        // if (callValue != 0) {
+        //     revert InvalidValue();
+        // }
 
-        return access.sessionKeySigner;
+        // return access.sessionKeySigner;
     }
 
     /**
@@ -394,5 +388,9 @@ contract StrategyModule is
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
         return interfaceId == type(IStrategyModule).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    function isInitialized(address account) public override view returns (bool) {
+        return _initialized[account];
     }
 }

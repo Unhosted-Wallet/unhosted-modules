@@ -1,12 +1,9 @@
-[submodule "strategy-module/lib/I4337"]
-	path = strategy-module/lib/I4337
-	url = https://github.com/leekt/I4337
 [submodule "strategy-module/lib/forge-std"]
 	path = strategy-module/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "strategy-module/lib/openzeppelin-contracts"]
-	path = strategy-module/lib/openzeppelin-contracts
-	url = https://github.com/OpenZeppelin/openzeppelin-contracts
 [submodule "strategy-module/lib/solady"]
 	path = strategy-module/lib/solady
 	url = https://github.com/vectorized/solady
+[submodule "strategy-module/lib/I4337"]
+	path = strategy-module/lib/I4337
+	url = https://github.com/leekt/I4337

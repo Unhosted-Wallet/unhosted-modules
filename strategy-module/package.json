@@ -27,7 +27,6 @@
   "author": "@zakrad",
   "license": "MIT",
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.1",
-    "@rhinestone/modulekit": "^0.3.2"
+    "@openzeppelin/contracts": "^5.0.1"
   }
 }

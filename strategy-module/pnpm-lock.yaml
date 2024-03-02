@@ -8,9 +8,6 @@ dependencies:
   '@openzeppelin/contracts':
     specifier: ^5.0.1
     version: 5.0.1
-  '@rhinestone/modulekit':
-    specifier: ^0.3.2
-    version: 0.3.2
 
 devDependencies:
   '@ERC4337/account-abstraction':
@@ -791,10 +788,6 @@ packages:
     dependencies:
       prettier: 2.8.8
     dev: true
-
-  /@rhinestone/modulekit@0.3.2:
-    resolution: {integrity: sha512-9nSDqnu+gPIEcjXxmK9HpC0L+aHLhiSew0CCBivVd4EA18/OWuLKAyaJkYSgVagjMWN3E1BOZrTQyQdTganOcQ==}
-    dev: false
 
   /@scure/base@1.1.5:
     resolution: {integrity: sha512-Brj9FiG2W1MRQSTB212YVPRrcbjkv48FoZi/u4l/zds/ieRrqsh7aUf6CLwkAq61oKXr/ZlTzlY66gLIj3TFTQ==}
