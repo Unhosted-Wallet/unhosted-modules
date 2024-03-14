@@ -68,6 +68,8 @@ contract RecurringExecuteModule is
             executionHourEnd,
             0
         );
+
+        emit RecurringExecutionAdded(msg.sender, receiver);
     }
 
     /**
@@ -75,6 +77,8 @@ contract RecurringExecuteModule is
      * @param receiver address of receiver of execution call.
      */
     function removeRecurringExecution(address receiver) public payable {
+        emit RecurringExecutionRemoved(msg.sender, receiver);
+
         delete recurringExecution[msg.sender][receiver];
     }
 
@@ -124,6 +128,8 @@ contract RecurringExecuteModule is
                 executionData.data,
                 Enum.Operation.Call
             );
+
+        emit RecurringExecutionExecuted(smartAccount, receiver);
     }
 
     /**
