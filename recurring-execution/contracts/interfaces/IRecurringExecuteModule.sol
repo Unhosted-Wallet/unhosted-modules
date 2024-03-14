@@ -49,6 +49,10 @@ interface IRecurringExecuteModule {
         uint32 lastExecutionTime;
     }
 
+    event RecurringExecutionAdded(address account, address target);
+    event RecurringExecutionRemoved(address account, address target);
+    event RecurringExecutionExecuted(address account, address target);
+
     error InvalidExecutionDay();
     error InvalidExecutionHour();
     error InvalidAddress();
